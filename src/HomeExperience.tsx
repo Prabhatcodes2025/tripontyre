@@ -1,13 +1,15 @@
 import { useEffect, useState, type FormEvent, type ComponentType } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowDown, ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Clock3, MapPin, Play } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Clock3, MapPin, Pause, Play } from 'lucide-react';
 import { destinations, gallery, packages, photos } from './data';
 
 type FormProps = { compact?: boolean };
 const heroSlides = [
   { name:'Kashmir', region:'NORTH INDIA · THE HIMALAYAS', title:<>Find your<br/><em>kind of beautiful.</em></>, note:'Lake mornings. Mountain air. A little more time to take it all in.', image:photos.kashmir, coords:'34.0837° N  ·  74.7973° E' },
+  { name:'Kerala', region:'SOUTH INDIA · BACKWATERS', title:<>Journeys that<br/><em>stay with you.</em></>, note:'Tea-scented hills, old harbour lanes and a quieter kind of holiday.', image:photos.kerala, coords:'10.1632° N  ·  76.6413° E' },
   { name:'Bali', region:'INDONESIA · ISLAND LIFE', title:<>Slow down.<br/><em>You’re somewhere special.</em></>, note:'Temple courtyards, green hills and the freedom to follow the day.', image:photos.bali, coords:'08.3405° S  ·  115.0920° E' },
-  { name:'Kerala', region:'SOUTH INDIA · BACKWATERS', title:<>Journeys that<br/><em>stay with you.</em></>, note:'Tea-scented hills, old harbour lanes and a quieter kind of holiday.', image:photos.kerala, coords:'10.1632° N  ·  76.6413° E' }
+  { name:'Dubai', region:'UNITED ARAB EMIRATES · CITY & DESERT', title:<>Follow the light.<br/><em>Stay for the contrast.</em></>, note:'A skyline at one turn, open desert at the next, and room to make both your own.', image:photos.dubai, coords:'25.2048° N  ·  55.2708° E' },
+  { name:'Maldives', region:'INDIAN OCEAN · ISLAND ESCAPE', title:<>Leave space<br/><em>for nothing at all.</em></>, note:'Warm water, long horizons and days designed to move at a gentler pace.', image:photos.maldives, coords:'03.2028° N  ·  73.2207° E' }
 ];
 
 const travelStyles = [
@@ -32,19 +34,21 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
   const [month, setMonth] = useState('');
   const [travellers, setTravellers] = useState('2');
   const [style, setStyle] = useState('');
+  const [paused, setPaused] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const timer = window.setInterval(() => setSlide(current => (current + 1) % heroSlides.length), 8000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [paused]);
 
   function findTrip(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const params = new URLSearchParams({ month, travellers, style });
-    if (destination) navigate(`/destinations/${destination}?${params.toString()}`);
-    else navigate(`/packages?${params.toString()}`);
+    if (destination) params.set('destination', destination);
+    navigate(`/packages?${params.toString()}`);
   }
 
   const current = heroSlides[slide];
@@ -53,7 +57,7 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
   const featuredPackages = packages.slice(0, 3);
 
   return <>
-    <section className="cinema-hero" aria-label="Featured destinations">
+    <section className="cinema-hero" aria-label="Featured destinations" aria-roledescription="slideshow" onFocus={()=>setPaused(true)} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget))setPaused(false)}} onTouchStart={event=>setTouchStart(event.touches[0].clientX)} onTouchEnd={event=>{if(touchStart===null)return;const distance=event.changedTouches[0].clientX-touchStart;if(Math.abs(distance)>45)setSlide(current=>(current+(distance<0?1:heroSlides.length-1))%heroSlides.length);setTouchStart(null)}}>
       {heroSlides.map((item, index) => <img key={item.name} className={`cinema-image ${slide === index ? 'is-current' : ''}`} src={item.image} alt={`${item.name} landscape`} fetchPriority={index === 0 ? 'high' : undefined} loading={index === 0 ? 'eager' : 'lazy'}/>) }
       <div className="cinema-scrim"/>
       <div className="cinema-copy" key={current.name}>
@@ -63,7 +67,8 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
         <div className="cinema-actions"><Link to="/packages" className="button gold">Explore journeys <ArrowRight size={17}/></Link><Link to="/contact" className="cinema-plan">Plan my trip <ArrowUpRight size={16}/></Link></div>
       </div>
       <div className="cinema-location"><MapPin size={15}/><span>{current.name.toUpperCase()}</span><i/>{current.coords}</div>
-      <div className="cinema-controls"><span>0{slide + 1} <i/> 0{heroSlides.length}</span><button onClick={() => setSlide((slide + heroSlides.length - 1) % heroSlides.length)} aria-label="Previous destination"><ChevronLeft/></button><button onClick={() => setSlide((slide + 1) % heroSlides.length)} aria-label="Next destination"><ChevronRight/></button><div className="cinema-dots">{heroSlides.map((item,index)=><button key={item.name} aria-label={`Show ${item.name}`} aria-current={slide===index?'true':undefined} onClick={()=>setSlide(index)}/>)}</div></div>
+      <div className="cinema-progress" aria-hidden="true"><i key={`${slide}-${paused}`} className={paused?'paused':''}/></div>
+      <div className="cinema-controls"><span>0{slide + 1} <i/> 0{heroSlides.length}</span><button onClick={() => {setSlide((slide + heroSlides.length - 1) % heroSlides.length);setPaused(true)}} aria-label="Previous destination"><ChevronLeft/></button><button onClick={() => {setSlide((slide + 1) % heroSlides.length);setPaused(true)}} aria-label="Next destination"><ChevronRight/></button><button onClick={()=>setPaused(value=>!value)} aria-label={paused?'Resume destination presentation':'Pause destination presentation'}>{paused?<Play size={16}/>:<Pause size={16}/>}</button><div className="cinema-dots">{heroSlides.map((item,index)=><button key={item.name} aria-label={`Show ${item.name}`} aria-current={slide===index?'true':undefined} onClick={()=>{setSlide(index);setPaused(true)}}/>)}</div></div>
       <a className="cinema-scroll" href="#welcome"><ArrowDown size={15}/> DISCOVER THE JOURNEY</a>
     </section>
 

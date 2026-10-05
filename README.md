@@ -1,6 +1,6 @@
 # My Tripon Travel
 
-A responsive React, TypeScript and Vite travel website demo for My Tripon Travel. The experience uses the supplied logo and brand colours, editorial destination photography, working route navigation, a responsive menu, gallery lightbox, tour itinerary pages and enquiry forms.
+A production-oriented React, TypeScript, Vite and Supabase travel platform for My Tripon Travel. It includes the premium public website, secure booking flow, customer portal, role-protected operations console, CRM/CMS data model, document access, payment provider boundary and server-side communication architecture.
 
 ## Run locally
 
@@ -10,11 +10,11 @@ A responsive React, TypeScript and Vite travel website demo for My Tripon Travel
 4. Run `npm run dev`.
 5. Run `npm run build` to create the production build in `dist/`.
 
-Without Supabase credentials the site uses local demo content, and the enquiry form displays a clear demo success state. With credentials configured, enquiries are inserted into the `enquiries` table. Never put a Supabase service-role key in browser environment variables.
+Without Supabase credentials the public site uses safe fallback content. Account, enquiry, booking, payment and admin operations display an explicit unconfigured state and never claim a transaction succeeded. Never put a Supabase service-role key or provider secret in browser environment variables.
 
 ## Supabase setup
 
-Apply [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL editor. The schema includes content tables, published-content read policies, and an insert-only public enquiry policy. Before launch, add CAPTCHA and rate limiting through a Supabase Edge Function or equivalent trusted endpoint, then point `submitEnquiry` at it. Admin writes should use an authenticated admin flow or server-side service role.
+Apply [`supabase/schema.sql`](supabase/schema.sql), then the files in [`supabase/migrations`](supabase/migrations) in order. Deploy the Edge Functions in [`supabase/functions`](supabase/functions) and configure the server-only secrets documented in [`.env.example`](.env.example). Public leads are rate-limited through `submit-lead`; bookings and pricing are calculated atomically by `create_booking_secure`; payments are verified by signed, idempotent webhooks.
 
 ## Deployment and content
 
