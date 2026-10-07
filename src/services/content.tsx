@@ -14,6 +14,8 @@ export type PublicHeroSlide = {
 };
 export type PublicService = { title: string; copy: string };
 export type PublicContentItem = { title: string; copy: string; slug?: string; image?: string };
+export type PublicTestimonial = { name: string; copy: string; location?: string; image?: string };
+export type PublicAward = { title: string; copy: string; issuer?: string; image?: string };
 
 const fallbackHeroSlides: PublicHeroSlide[] = [
   { name:'Kashmir', region:'NORTH INDIA · THE HIMALAYAS', title:'Find your kind of beautiful.', note:'Lake mornings. Mountain air. A little more time to take it all in.', image:photos.kashmir, coords:'34.0837° N · 74.7973° E' },
@@ -53,6 +55,8 @@ type PublicContent = {
   blogs: PublicContentItem[];
   events: PublicContentItem[];
   faqs: PublicContentItem[];
+  testimonials: PublicTestimonial[];
+  awards: PublicAward[];
 };
 
 const fallbackContent: PublicContent = {
@@ -64,6 +68,8 @@ const fallbackContent: PublicContent = {
   blogs: fallbackBlogs,
   events: fallbackEvents,
   faqs: fallbackFaqs,
+  testimonials: [],
+  awards: [],
 };
 
 const ContentContext = createContext<PublicContent>(fallbackContent);
@@ -76,7 +82,7 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
     let active = true;
     void (async () => {
-      const [destinationResult, packageResult, galleryResult, heroResult, serviceResult, blogResult, eventResult, faqResult] = await Promise.all([
+      const [destinationResult, packageResult, galleryResult, heroResult, serviceResult, blogResult, eventResult, faqResult, testimonialResult, awardResult] = await Promise.all([
         supabase.from('destinations').select('slug,name,region,country,state,summary,hero_image').eq('published', true).order('featured', { ascending:false }).order('name'),
         supabase.from('tour_packages').select('slug,title,duration_days,duration_nights,summary,description,hero_image,trip_style,destinations(name,country,state),tour_itinerary_days(day_number,location)').eq('published', true).order('featured', { ascending:false }).order('created_at'),
         supabase.from('gallery_items').select('media_url').eq('published', true).eq('media_type', 'image').order('display_order'),
@@ -85,6 +91,8 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         supabase.from('blogs').select('slug,title,excerpt,cover_image').eq('published', true).order('published_at', { ascending:false }),
         supabase.from('events').select('slug,title,description,cover_image').eq('published', true).order('starts_at', { ascending:true }),
         supabase.from('faqs').select('question,answer').eq('published', true).order('display_order'),
+        supabase.from('testimonials').select('name,location,quote,media_url').eq('published', true).order('created_at', { ascending:false }),
+        supabase.from('awards').select('title,issuer,description,image_url').eq('published', true).order('awarded_on', { ascending:false }),
       ]);
       if (!active) return;
 
@@ -135,6 +143,8 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         blogs: blogResult.data?.length ? blogResult.data.map(row => ({ title:text(row.title), copy:text(row.excerpt), slug:text(row.slug), image:text(row.cover_image) || undefined })) : fallbackContent.blogs,
         events: eventResult.data?.length ? eventResult.data.map(row => ({ title:text(row.title), copy:text(row.description), slug:text(row.slug), image:text(row.cover_image) || undefined })) : fallbackContent.events,
         faqs: faqResult.data?.length ? faqResult.data.map(row => ({ title:text(row.question), copy:text(row.answer) })) : fallbackContent.faqs,
+        testimonials: (testimonialResult.data || []).map(row => ({ name:text(row.name)||'Traveller', location:text(row.location)||undefined, copy:text(row.quote), image:text(row.media_url)||undefined })).filter(item=>item.copy),
+        awards: (awardResult.data || []).map(row => ({ title:text(row.title), issuer:text(row.issuer)||undefined, copy:text(row.description), image:text(row.image_url)||undefined })).filter(item=>item.title),
       });
     })();
     return () => { active = false; };
