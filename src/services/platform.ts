@@ -106,8 +106,51 @@ export async function listAdminRecords(table: string) {
   return data || [];
 }
 
-export async function updateAdminRecord(table: string, id: string, values: Record<string, unknown>) {
-  const { data, error } = await client().from(table).update(values).eq('id', id).select().single();
+export async function createAdminRecord(table: string, values: Record<string, unknown>) {
+  const { data, error } = await client().from(table).insert(values).select().single();
   if (error) throw error;
   return data;
+}
+
+export async function updateAdminRecord(table: string, id: string, values: Record<string, unknown>, idField = 'id') {
+  const { data, error } = await client().from(table).update(values).eq(idField, id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getAdminOverview() {
+  const api = client();
+  const [bookings, leads, payments, departures, bookingCount, leadCount, pendingPaymentCount] = await Promise.all([
+    api.from('bookings').select('id,reference,travel_date,total_amount,balance_amount,currency,booking_status,payment_status,created_at,tour_packages(title)').order('created_at',{ascending:false}).limit(6),
+    api.from('leads').select('id,name,destination,status,created_at').order('created_at',{ascending:false}).limit(6),
+    api.from('payments').select('id,status,amount'),
+    api.from('package_availability').select('id,travel_date,capacity,reserved,status,tour_packages(title)').gte('travel_date',new Date().toISOString().slice(0,10)).order('travel_date').limit(6),
+    api.from('bookings').select('id',{count:'exact',head:true}),
+    api.from('leads').select('id',{count:'exact',head:true}),
+    api.from('bookings').select('id',{count:'exact',head:true}).eq('payment_status','pending'),
+  ]);
+  const error = bookings.error || leads.error || payments.error || departures.error || bookingCount.error || leadCount.error || pendingPaymentCount.error;
+  if (error) throw error;
+  return {
+    bookings: bookings.data || [],
+    leads: leads.data || [],
+    payments: payments.data || [],
+    departures: departures.data || [],
+    counts: { bookings:bookingCount.count || 0, leads:leadCount.count || 0, pendingPayments:pendingPaymentCount.count || 0 },
+  };
+}
+
+export async function getCustomerOverview(userId: string) {
+  const api = client();
+  const [profile, bookings, payments, invoices, vouchers, documents] = await Promise.all([
+    api.from('profiles').select('id,full_name,phone,avatar_path').eq('id',userId).single(),
+    api.from('bookings').select('id,reference,travel_date,adult_count,child_count,infant_count,total_amount,paid_amount,balance_amount,currency,booking_status,payment_status,created_at,tour_packages(title,slug,hero_image)').order('created_at',{ascending:false}),
+    api.from('payments').select('id,booking_id,amount,currency,payment_kind,status,verified_at,created_at').order('created_at',{ascending:false}),
+    api.from('invoices').select('id,invoice_number,booking_id,status,total_amount,amount_due,currency,issued_at').order('created_at',{ascending:false}),
+    api.from('vouchers').select('id,voucher_number,booking_id,voucher_type,status,issued_at').order('created_at',{ascending:false}),
+    api.from('documents').select('id,title,document_type,mime_type,issued_at,status').eq('status','issued').order('issued_at',{ascending:false}),
+  ]);
+  const error = profile.error || bookings.error || payments.error || invoices.error || vouchers.error || documents.error;
+  if (error) throw error;
+  return { profile:profile.data, bookings:bookings.data || [], payments:payments.data || [], invoices:invoices.data || [], vouchers:vouchers.data || [], documents:documents.data || [] };
 }

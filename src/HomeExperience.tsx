@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ComponentType } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowDown, ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Clock3, MapPin, Pause, Play } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, Pause, Play } from 'lucide-react';
 import { photos } from './data';
 import { usePublicContent } from './services/content';
 
@@ -12,6 +12,21 @@ const travelStyles = [
   { title:'For the open road', label:'Adventure & outdoors', image:photos.mountains, text:'Fresh air, changing landscapes and room to roam.' },
   { title:'For the shoreline', label:'Beach escapes', image:photos.beach, text:'Salt air, warm light and nowhere else to be.' },
   { title:'For farther away', label:'International journeys', image:photos.europe, text:'A new country, brought together around your interests.' }
+];
+
+const montageDefaults = [
+  { name:'Kashmir', region:'MOUNTAIN AIR', image:photos.kashmir, note:'Lake mornings and open Himalayan views.' },
+  { name:'Together', region:'FRIENDS ON THE ROAD', image:photos.traveller, note:'The stories are always better when they are shared.' },
+  { name:'Kerala', region:'BACKWATER RHYTHMS', image:photos.kerala, note:'Quiet water, green horizons and room to slow down.' },
+  { name:'Dubai', region:'CITY & DESERT', image:photos.dubai, note:'Bright skylines and a different world beyond them.' },
+  { name:'For two', region:'JOURNEYS TOGETHER', image:photos.couple, note:'Time away, planned around the two of you.' },
+  { name:'Bali', region:'CULTURE & ISLAND LIFE', image:photos.bali, note:'Temple courtyards, local rituals and the sea.' },
+  { name:'Family days', region:'EVERYONE INCLUDED', image:photos.family, note:'A pace that leaves space for every generation.' },
+  { name:'Open road', region:'THE SCENIC WAY', image:photos.coast, note:'Take the road that makes the journey part of the story.' },
+  { name:'Maldives', region:'RESORT ESCAPE', image:photos.maldives, note:'Warm water and long, unhurried horizons.' },
+  { name:'Local stories', region:'CULTURE UP CLOSE', image:photos.local, note:'Meet the place, not only the postcard.' },
+  { name:'Adventure', region:'OUT IN THE WILD', image:photos.mountains, note:'Fresh air, changing ground and a little courage.' },
+  { name:'Goa', region:'BEACH LIGHT', image:photos.goa, note:'Salt air, easy evenings and nowhere else to be.' },
 ];
 
 export default function HomeExperience({ EnquiryForm }: { EnquiryForm: ComponentType<FormProps> }) {
@@ -26,11 +41,22 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const navigate = useNavigate();
 
+  const montageFrames = [...heroSlides.map(item => ({ name:item.name, region:item.region, image:item.image, note:item.note })), ...montageDefaults]
+    .filter((item, index, all) => all.findIndex(candidate => candidate.image === item.image) === index)
+    .slice(0, 12);
+
   useEffect(() => {
     if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const timer = window.setInterval(() => setSlide(current => (current + 1) % heroSlides.length), 8000);
+    const timer = window.setInterval(() => setSlide(current => (current + 1) % montageFrames.length), 1750);
     return () => window.clearInterval(timer);
-  }, [paused, heroSlides.length]);
+  }, [paused, montageFrames.length]);
+
+  useEffect(() => {
+    for (let offset=1; offset<=3; offset+=1) {
+      const preload = new Image();
+      preload.src = montageFrames[(slide + offset) % montageFrames.length].image;
+    }
+  }, [slide, montageFrames]);
 
   function findTrip(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,7 +65,8 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
     navigate(`/packages?${params.toString()}`);
   }
 
-  const current = heroSlides[slide % heroSlides.length];
+  const current = montageFrames[slide % montageFrames.length];
+  const captionPhase = slide % 3;
   const featured = destinations.find(item => item.slug === 'kashmir') || destinations[0];
   const smallerDestinations = destinations.filter(item => item.slug !== featured.slug).slice(0, 6);
   const featuredPackages = packages.slice(0, 3);
@@ -51,18 +78,22 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
   }));
 
   return <>
-    <section className="cinema-hero" aria-label="Featured destinations" aria-roledescription="slideshow" onFocus={()=>setPaused(true)} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget))setPaused(false)}} onTouchStart={event=>setTouchStart(event.touches[0].clientX)} onTouchEnd={event=>{if(touchStart===null)return;const distance=event.changedTouches[0].clientX-touchStart;if(Math.abs(distance)>45)setSlide(current=>(current+(distance<0?1:heroSlides.length-1))%heroSlides.length);setTouchStart(null)}}>
-      {heroSlides.map((item, index) => <img key={item.name} className={`cinema-image ${slide === index ? 'is-current' : ''}`} src={item.image} alt={`${item.name} landscape`} fetchPriority={index === 0 ? 'high' : undefined} loading={index === 0 ? 'eager' : 'lazy'}/>) }
-      <div className="cinema-scrim"/>
-      <div className="cinema-copy" key={current.name}>
-        <span className="cinema-kicker"><i/> {current.region}</span>
-        <h1>{current.title}</h1>
-        <p>{current.note}</p>
-        <div className="cinema-actions"><Link to="/packages" className="button gold">Explore journeys <ArrowRight size={17}/></Link><Link to="/contact" className="cinema-plan">Plan my trip <ArrowUpRight size={16}/></Link></div>
+    <section className="cinema-hero montage-hero" aria-label="My Tripon Travel moments" aria-roledescription="slideshow" onTouchStart={event=>setTouchStart(event.touches[0].clientX)} onTouchEnd={event=>{if(touchStart===null)return;const distance=event.changedTouches[0].clientX-touchStart;if(Math.abs(distance)>45)setSlide(value=>(value+(distance<0?1:montageFrames.length-1))%montageFrames.length);setTouchStart(null)}}>
+      <div className={`montage-frame direction-${slide%4}`} key={`${current.name}-${slide}`}>
+        <img src={current.image} alt={`${current.name} travel moment`} fetchPriority={slide===0?'high':undefined}/>
       </div>
-      <div className="cinema-location"><MapPin size={15}/><span>{current.name.toUpperCase()}</span><i/>{current.coords}</div>
-      <div className="cinema-progress" aria-hidden="true"><i key={`${slide}-${paused}`} className={paused?'paused':''}/></div>
-      <div className="cinema-controls"><span>0{slide + 1} <i/> 0{heroSlides.length}</span><button onClick={() => {setSlide((slide + heroSlides.length - 1) % heroSlides.length);setPaused(true)}} aria-label="Previous destination"><ChevronLeft/></button><button onClick={() => {setSlide((slide + 1) % heroSlides.length);setPaused(true)}} aria-label="Next destination"><ChevronRight/></button><button onClick={()=>setPaused(value=>!value)} aria-label={paused?'Resume destination presentation':'Pause destination presentation'}>{paused?<Play size={16}/>:<Pause size={16}/>}</button><div className="cinema-dots">{heroSlides.map((item,index)=><button key={item.name} aria-label={`Show ${item.name}`} aria-current={slide===index?'true':undefined} onClick={()=>{setSlide(index);setPaused(true)}}/>)}</div></div>
+      <div className="cinema-scrim"/>
+      <div className="montage-meta"><span>{current.region}</span><i/><b>{current.name}</b></div>
+      <div className={`cinema-copy montage-copy phase-${captionPhase}`} key={`caption-${captionPhase}`}>
+        <span className="cinema-kicker"><i/> A JOURNEY IN MOMENTS</span>
+        {captionPhase===0&&<h1><span>Your Journey....</span><em>Our Plan.....</em></h1>}
+        {captionPhase===1&&<h1><span>Stay Stress free.....</span><em>Enjoy with favorites.....</em></h1>}
+        {captionPhase===2&&<h1 className="montage-signature"><span>My Tripon Travel.</span></h1>}
+        <p>{current.note}</p>
+        <div className="cinema-actions"><Link to="/packages" className="button gold">Explore tours <ArrowRight size={17}/></Link><Link to="/contact" className="cinema-plan">Plan my trip <ArrowUpRight size={16}/></Link></div>
+      </div>
+      <div className="montage-progress" aria-label={`Image ${slide+1} of ${montageFrames.length}`}><span>{String(slide+1).padStart(2,'0')}</span><div><i key={`${slide}-${paused}`} className={paused?'paused':''}/></div><span>{String(montageFrames.length).padStart(2,'0')}</span></div>
+      <button className="montage-toggle" onClick={()=>setPaused(value=>!value)} aria-label={paused?'Play travel presentation':'Pause travel presentation'}>{paused?<Play size={17}/>:<Pause size={17}/>}</button>
       <a className="cinema-scroll" href="#welcome"><ArrowDown size={15}/> DISCOVER THE JOURNEY</a>
     </section>
 
