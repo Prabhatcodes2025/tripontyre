@@ -1,6 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import type { BookingRecord, BookingRequest, UserRole } from '../types/domain';
+import type { BookingRecord, BookingRequest, DocumentRecord, UserRole } from '../types/domain';
 
 export class ConfigurationError extends Error {
   constructor(message = 'This service is not configured yet.') {
@@ -39,8 +39,13 @@ export async function register(email: string, password: string, fullName: string
 
 export async function requestPasswordReset(email: string) {
   const { error } = await client().auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/account`,
+    redirectTo: `${window.location.origin}/reset-password`,
   });
+  if (error) throw error;
+}
+
+export async function updatePassword(password: string) {
+  const { error } = await client().auth.updateUser({ password });
   if (error) throw error;
 }
 
@@ -77,6 +82,22 @@ export async function listOwnBookings(): Promise<BookingRecord[]> {
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data || []) as unknown as BookingRecord[];
+}
+
+export async function listOwnDocuments(): Promise<DocumentRecord[]> {
+  const { data, error } = await client().from('documents')
+    .select('id,title,document_type,mime_type,issued_at,status')
+    .eq('status', 'issued')
+    .order('issued_at', { ascending: false });
+  if (error) throw error;
+  return (data || []) as DocumentRecord[];
+}
+
+export async function getDocumentUrl(documentId: string) {
+  const { data, error } = await client().functions.invoke('document-access', { body: { documentId } });
+  if (error) throw error;
+  if (!data?.url) throw new Error('The document link could not be created.');
+  return String(data.url);
 }
 
 export async function listAdminRecords(table: string) {

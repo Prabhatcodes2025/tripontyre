@@ -24,7 +24,7 @@ Deno.serve(async request => {
     const admin = serviceClient();
     const { data: existing } = await admin.from('payments').select('provider_order_id,amount,currency,status')
       .eq('booking_id', booking.id).eq('payment_kind', paymentMode).in('status', ['pending','processing']).maybeSingle();
-    if (existing) return json({ configured: true, provider, order: { id: existing.provider_order_id, amount: existing.amount, currency: existing.currency } });
+    if (existing) return json({ configured: true, provider, order: { id: existing.provider_order_id, amount: existing.amount, currency: existing.currency, keyId } });
 
     const providerResponse = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Basic ${btoa(`${keyId}:${keySecret}`)}` },

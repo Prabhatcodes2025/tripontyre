@@ -14,7 +14,7 @@ Without Supabase credentials the public site uses safe fallback content. Account
 
 ## Supabase setup
 
-Apply [`supabase/schema.sql`](supabase/schema.sql), then the files in [`supabase/migrations`](supabase/migrations) in order. Deploy the Edge Functions in [`supabase/functions`](supabase/functions) and configure the server-only secrets documented in [`.env.example`](.env.example). Public leads are rate-limited through `submit-lead`; bookings and pricing are calculated atomically by `create_booking_secure`; payments are verified by signed, idempotent webhooks.
+For a new project, apply [`supabase/FRESH_SUPABASE_SETUP.sql`](supabase/FRESH_SUPABASE_SETUP.sql) once. Apply [`supabase/SEED_PUBLIC_CONTENT.sql`](supabase/SEED_PUBLIC_CONTENT.sql) only when the public CMS tables are empty. Deploy the Edge Functions in [`supabase/functions`](supabase/functions) and configure the server-only secrets documented in [`.env.example`](.env.example). Public leads are rate-limited through `submit-lead`; bookings and pricing are calculated atomically by `create_booking_secure`; payments are verified by signed, idempotent webhooks.
 
 ## Deployment and content
 

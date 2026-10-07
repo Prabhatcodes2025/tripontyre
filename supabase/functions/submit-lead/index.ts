@@ -10,7 +10,9 @@ Deno.serve(async request => {
   try {
     const body = await request.json();
     const name = clean(body.name, 120), phone = clean(body.phone, 30), email = clean(body.email, 254);
+    const travellers = body.travellers == null || body.travellers === '' ? null : Number(body.travellers);
     if (name.length < 2 || phone.length < 8 || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return json({ error: 'Please check the enquiry details.' }, 422);
+    if (travellers !== null && (!Number.isInteger(travellers) || travellers < 1 || travellers > 100)) return json({ error: 'Please check the traveller count.' }, 422);
     const admin = serviceClient();
     const ip = (request.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim();
     const keyHash = await digest(`${Deno.env.get('RATE_LIMIT_SALT') || 'configure-me'}:${ip}`);
@@ -20,7 +22,7 @@ Deno.serve(async request => {
     await admin.from('request_rate_limits').insert({ key_hash: keyHash, action: 'submit-lead' });
     const { error } = await admin.from('leads').insert({
       name, phone, email: email || null, destination: clean(body.destination, 120) || null,
-      travel_month: clean(body.travelMonth, 40) || null, adult_count: Number(body.travellers) || null,
+      travel_month: clean(body.travelMonth, 40) || null, adult_count: travellers,
       message: clean(body.message, 2000) || null, source: clean(body.source, 50) || 'website', status: 'new',
     });
     if (error) throw error;

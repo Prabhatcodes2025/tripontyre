@@ -39,6 +39,15 @@ export type BookingRecord = {
   tour_packages?: { title?: string; slug?: string } | null;
 };
 
+export type DocumentRecord = {
+  id: string;
+  title: string;
+  document_type: string;
+  mime_type: string;
+  issued_at: string | null;
+  status: 'draft' | 'issued' | 'void';
+};
+
 export type AdminModule = {
   label: string;
   table?: string;

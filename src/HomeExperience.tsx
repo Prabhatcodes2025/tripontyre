@@ -1,17 +1,10 @@
 import { useEffect, useState, type FormEvent, type ComponentType } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowDown, ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Clock3, MapPin, Pause, Play } from 'lucide-react';
-import { destinations, gallery, packages, photos } from './data';
+import { photos } from './data';
+import { usePublicContent } from './services/content';
 
 type FormProps = { compact?: boolean };
-const heroSlides = [
-  { name:'Kashmir', region:'NORTH INDIA · THE HIMALAYAS', title:<>Find your<br/><em>kind of beautiful.</em></>, note:'Lake mornings. Mountain air. A little more time to take it all in.', image:photos.kashmir, coords:'34.0837° N  ·  74.7973° E' },
-  { name:'Kerala', region:'SOUTH INDIA · BACKWATERS', title:<>Journeys that<br/><em>stay with you.</em></>, note:'Tea-scented hills, old harbour lanes and a quieter kind of holiday.', image:photos.kerala, coords:'10.1632° N  ·  76.6413° E' },
-  { name:'Bali', region:'INDONESIA · ISLAND LIFE', title:<>Slow down.<br/><em>You’re somewhere special.</em></>, note:'Temple courtyards, green hills and the freedom to follow the day.', image:photos.bali, coords:'08.3405° S  ·  115.0920° E' },
-  { name:'Dubai', region:'UNITED ARAB EMIRATES · CITY & DESERT', title:<>Follow the light.<br/><em>Stay for the contrast.</em></>, note:'A skyline at one turn, open desert at the next, and room to make both your own.', image:photos.dubai, coords:'25.2048° N  ·  55.2708° E' },
-  { name:'Maldives', region:'INDIAN OCEAN · ISLAND ESCAPE', title:<>Leave space<br/><em>for nothing at all.</em></>, note:'Warm water, long horizons and days designed to move at a gentler pace.', image:photos.maldives, coords:'03.2028° N  ·  73.2207° E' }
-];
-
 const travelStyles = [
   { title:'For two', label:'Honeymoon & couples', image:photos.couple, text:'Unhurried days, thoughtful details, time together.' },
   { title:'For everyone', label:'Family holidays', image:photos.family, text:'A good pace for little legs and long conversations.' },
@@ -21,13 +14,8 @@ const travelStyles = [
   { title:'For farther away', label:'International journeys', image:photos.europe, text:'A new country, brought together around your interests.' }
 ];
 
-const journal = [
-  { title:'A slower way through Kerala', category:'FIELD NOTES · SOUTH INDIA', image:photos.boat, to:'/destinations/kerala' },
-  { title:'What to leave room for in Kashmir', category:'PLACES · THE HIMALAYAS', image:photos.kashmir, to:'/destinations/kashmir' },
-  { title:'Bali beyond the first picture', category:'FIELD NOTES · INDONESIA', image:photos.bali, to:'/destinations/bali' }
-];
-
 export default function HomeExperience({ EnquiryForm }: { EnquiryForm: ComponentType<FormProps> }) {
+  const { destinations, packages, gallery, heroSlides, blogs } = usePublicContent();
   const [slide, setSlide] = useState(0);
   const [activeStyle, setActiveStyle] = useState(0);
   const [destination, setDestination] = useState('');
@@ -42,7 +30,7 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
     if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const timer = window.setInterval(() => setSlide(current => (current + 1) % heroSlides.length), 8000);
     return () => window.clearInterval(timer);
-  }, [paused]);
+  }, [paused, heroSlides.length]);
 
   function findTrip(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,10 +39,16 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
     navigate(`/packages?${params.toString()}`);
   }
 
-  const current = heroSlides[slide];
-  const featured = destinations.find(item => item.slug === 'kashmir')!;
-  const smallerDestinations = ['kerala','bali','dubai','thailand','maldives','rajasthan'].map(slug => destinations.find(item => item.slug === slug)!).filter(Boolean);
+  const current = heroSlides[slide % heroSlides.length];
+  const featured = destinations.find(item => item.slug === 'kashmir') || destinations[0];
+  const smallerDestinations = destinations.filter(item => item.slug !== featured.slug).slice(0, 6);
   const featuredPackages = packages.slice(0, 3);
+  const journal = blogs.slice(0, 3).map((item, index) => ({
+    title: item.title,
+    category: item.copy || 'TRAVEL JOURNAL',
+    image: item.image || [photos.boat, photos.kashmir, photos.bali][index % 3],
+    to: '/journal',
+  }));
 
   return <>
     <section className="cinema-hero" aria-label="Featured destinations" aria-roledescription="slideshow" onFocus={()=>setPaused(true)} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget))setPaused(false)}} onTouchStart={event=>setTouchStart(event.touches[0].clientX)} onTouchEnd={event=>{if(touchStart===null)return;const distance=event.changedTouches[0].clientX-touchStart;if(Math.abs(distance)>45)setSlide(current=>(current+(distance<0?1:heroSlides.length-1))%heroSlides.length);setTouchStart(null)}}>
