@@ -6,5 +6,10 @@ export const appConfig = {
   paymentProvider: import.meta.env.VITE_PAYMENT_PROVIDER || 'unconfigured',
 };
 
+export function authRedirectUrl(path: '/auth/callback' | '/auth/callback/reset-password') {
+  const origin = typeof window === 'undefined' ? appConfig.siteUrl : window.location.origin;
+  return new URL(path, origin).toString();
+}
+
 export const money = (amount: number, currency = 'INR') =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount / 100);

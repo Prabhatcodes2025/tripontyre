@@ -333,8 +333,10 @@ create index request_rate_limits_lookup_idx on public.request_rate_limits(action
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path=public,pg_temp as $$
 begin
-  insert into public.profiles(id,full_name)
-  values(new.id,nullif(new.raw_user_meta_data->>'full_name','')) on conflict(id) do nothing;
+  -- Public identity metadata is deliberately limited to presentation fields.
+  -- Role is always assigned here, never accepted from signup metadata.
+  insert into public.profiles(id,role,full_name)
+  values(new.id,'customer',nullif(new.raw_user_meta_data->>'full_name','')) on conflict(id) do nothing;
   return new;
 end $$;
 

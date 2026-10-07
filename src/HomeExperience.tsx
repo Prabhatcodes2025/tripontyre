@@ -34,14 +34,12 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
   const [slide, setSlide] = useState(0);
   const [activeStyle, setActiveStyle] = useState(0);
   const [destination, setDestination] = useState('');
-  const [month, setMonth] = useState('');
-  const [travellers, setTravellers] = useState('2');
   const [style, setStyle] = useState('');
   const [paused, setPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const navigate = useNavigate();
 
-  const montageFrames = [...heroSlides.map(item => ({ name:item.name, region:item.region, image:item.image, note:item.note })), ...montageDefaults]
+  const montageFrames = [...montageDefaults, ...heroSlides.map(item => ({ name:item.name, region:item.region, image:item.image, note:item.note }))]
     .filter((item, index, all) => all.findIndex(candidate => candidate.image === item.image) === index)
     .slice(0, 12);
 
@@ -60,7 +58,8 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
 
   function findTrip(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const params = new URLSearchParams({ month, travellers, style });
+    const params = new URLSearchParams();
+    if (style) params.set('style', style);
     if (destination) params.set('destination', destination);
     navigate(`/packages?${params.toString()}`);
   }
@@ -79,7 +78,7 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
 
   return <>
     <section className="cinema-hero montage-hero" aria-label="My Tripon Travel moments" aria-roledescription="slideshow" onTouchStart={event=>setTouchStart(event.touches[0].clientX)} onTouchEnd={event=>{if(touchStart===null)return;const distance=event.changedTouches[0].clientX-touchStart;if(Math.abs(distance)>45)setSlide(value=>(value+(distance<0?1:montageFrames.length-1))%montageFrames.length);setTouchStart(null)}}>
-      <div className={`montage-frame direction-${slide%4}`} key={`${current.name}-${slide}`}>
+      <div className={`montage-frame direction-${slide%4} ${current.image === photos.kashmir ? 'dal-lake-frame' : ''}`} key={`${current.name}-${slide}`}>
         <img src={current.image} alt={`${current.name} travel moment`} fetchPriority={slide===0?'high':undefined}/>
       </div>
       <div className="cinema-scrim"/>
@@ -100,8 +99,6 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
     <form className="trip-finder" onSubmit={findTrip} aria-label="Find a holiday">
       <div className="finder-heading"><span>START WITH A PLACE</span><b>Where do you want to go?</b></div>
       <label><span>Destination</span><select value={destination} onChange={event=>setDestination(event.target.value)}><option value="">Anywhere you like</option>{destinations.map(item=><option key={item.slug} value={item.slug}>{item.name}</option>)}</select></label>
-      <label><span>Travel month</span><select value={month} onChange={event=>setMonth(event.target.value)}><option value="">I’m flexible</option>{['January','February','March','April','May','June','July','August','September','October','November','December'].map(value=><option key={value}>{value}</option>)}</select></label>
-      <label><span>Travellers</span><select value={travellers} onChange={event=>setTravellers(event.target.value)}>{['1','2','3','4','5','6+'].map(value=><option key={value} value={value}>{value} {value==='1'?'traveller':'travellers'}</option>)}</select></label>
       <label><span>Travel style</span><select value={style} onChange={event=>setStyle(event.target.value)}><option value="">Show me around</option>{['Family holiday','Couples','Culture & heritage','Adventure','Beach escape'].map(value=><option key={value}>{value}</option>)}</select></label>
       <button className="button teal">Find my holiday <ArrowRight size={16}/></button>
     </form>
@@ -142,11 +139,7 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
 
     <section className="traveller-wall section-pad"><div className="world-heading"><div><span className="section-overline">TRAVEL LOOKS BETTER WHEN IT’S REAL</span><h2>Little moments.<br/><em>Long afterglow.</em></h2></div><div><p>Shared views, new rituals and familiar faces in unfamiliar places.</p><Link to="/gallery" className="line-link">See more travel stories <ArrowRight size={15}/></Link></div></div><div className="memory-wall">{gallery.slice(0,7).map((image,index)=><Link to="/gallery" className={`memory memory-${index+1}`} key={image}><img src={image} alt={['Travellers taking in the view','Houseboat on the Kerala backwaters','A couple on a trip together','Taj Mahal at sunrise','Family outdoors on holiday','Local culture and place','Coastal escape'][index]} loading="lazy"/><span>{['KASHMIR · WITH FRIENDS','KERALA · SLOW MORNINGS','A LITTLE TIME FOR TWO','AGRA · FIRST LIGHT','FAMILY DAYS','CULTURE & PLACE','BY THE WATER'][index]}</span></Link>)}</div><Link to="/gallery" className="line-link wall-link">See more travel stories <ArrowRight size={15}/></Link></section>
 
-    <section className="video-stories"><div className="video-heading"><span className="section-overline">FROM THE PEOPLE WHO WENT</span><h2>Stories you can<br/><em>hear and feel.</em></h2><p>A place for traveller films, voices and the moments behind the photos. The previews here are illustrative placeholders.</p></div><div className="video-feature"><img src={photos.traveller} alt="Traveller story preview" loading="lazy"/><Link to="/testimonials" aria-label="Explore traveller stories" className="video-play"><Play fill="currentColor"/></Link><span>TRAVELLER STORY · DEMO PREVIEW</span><div><small>NOTES FROM THE ROAD</small><h3>A different view of the journey</h3></div></div><div className="video-list">{[[photos.couple,'A few days made for two','COUPLES · DEMO PREVIEW'],[photos.family,'Out there together','FAMILY · DEMO PREVIEW']].map(([image,title,label])=><Link to="/testimonials" key={title}><img src={image} alt="" loading="lazy"/><span><small>{label}</small><b>{title}</b></span><Play size={15}/></Link>)}</div></section>
-
     <section className="why-editorial section-pad"><div className="why-statement"><span className="section-overline">THE MY TRIPON APPROACH</span><h2>Your holiday<br/>deserves more<br/><em>than a template.</em></h2><img src={photos.local} alt="A glimpse of local life on the road" loading="lazy"/><p>Good planning starts with listening. Then it brings the details together around your people, your pace and what you’d like to discover.</p><Link to="/about" className="line-link">A little about our approach <ArrowRight size={15}/></Link></div><div className="why-list">{[['01','Trips shaped around you'],['02','Thoughtful itinerary planning'],['03','Support through your journey'],['04','Domestic & international experiences']].map(([num,title])=><div key={num}><span>{num}</span><h3>{title}</h3><ArrowUpRight size={17}/></div>)}</div></section>
-
-    <section className="recognition-band"><div className="recognition-seal">MT</div><div><span className="section-overline">RECOGNITION & MILESTONES</span><h2>A space for the work<br/><em>worth recognising.</em></h2><p>Verified awards and milestones will be shared here as they are provided.</p></div><Link to="/awards" className="line-link">Our honours <ArrowRight size={15}/></Link><span className="recognition-index">01 / VERIFIED CONTENT</span></section>
 
     <section className="journal-editorial section-pad"><div className="world-heading"><div><span className="section-overline">THE TRIPON JOURNAL</span><h2>For the curious<br/><em>and the almost-ready.</em></h2></div><div><p>Small notes about places, seasons and the details that help a trip take shape.</p><Link to="/destinations" className="line-link">Explore the places <ArrowRight size={15}/></Link></div></div><div className="journal-featured"><Link to={journal[0].to} className="journal-lead"><img src={journal[0].image} alt="Traditional boat in Kerala" loading="lazy"/><span>{journal[0].category}</span><h3>{journal[0].title}</h3><b>Read the field note <ArrowUpRight size={15}/></b></Link><div className="journal-secondary">{journal.slice(1).map(story=><Link to={story.to} key={story.title}><img src={story.image} alt="" loading="lazy"/><span><small>{story.category}</small><b>{story.title}</b><i>Read the note <ArrowUpRight size={14}/></i></span></Link>)}</div></div></section>
 

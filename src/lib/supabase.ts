@@ -1,7 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-export const supabase = url && key ? createClient(url, key) : null;
+export const supabase = url && key ? createClient(url, key, {
+  auth: {
+    flowType: 'pkce',
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+}) : null;
 
 export async function submitEnquiry(values: Record<string,string>) {
   if (!supabase) return { configured: false, submitted: false };

@@ -24,8 +24,9 @@ create table if not exists public.profiles (
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 begin
-  insert into public.profiles(id, full_name)
-  values(new.id, nullif(new.raw_user_meta_data->>'full_name',''))
+  -- Never trust a client-supplied role in raw_user_meta_data.
+  insert into public.profiles(id, role, full_name)
+  values(new.id, 'customer', nullif(new.raw_user_meta_data->>'full_name',''))
   on conflict(id) do nothing;
   return new;
 end $$;

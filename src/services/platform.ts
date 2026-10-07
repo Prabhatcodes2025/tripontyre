@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { authRedirectUrl } from '../lib/config';
 import type { BookingRecord, BookingRequest, DocumentRecord, UserRole } from '../types/domain';
 
 export class ConfigurationError extends Error {
@@ -31,7 +32,10 @@ export async function register(email: string, password: string, fullName: string
   const { data, error } = await client().auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      emailRedirectTo: authRedirectUrl('/auth/callback'),
+      data: { full_name: fullName },
+    },
   });
   if (error) throw error;
   return data;
@@ -39,14 +43,43 @@ export async function register(email: string, password: string, fullName: string
 
 export async function requestPasswordReset(email: string) {
   const { error } = await client().auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
+    redirectTo: authRedirectUrl('/auth/callback/reset-password'),
   });
   if (error) throw error;
+}
+
+export async function completeAuthCallback() {
+  const api = client();
+  const url = new URL(window.location.href);
+  const authError = url.searchParams.get('error_description') || url.searchParams.get('error');
+  if (authError) throw new Error(authError);
+  const code = url.searchParams.get('code');
+  if (code) {
+    const { data, error } = await api.auth.exchangeCodeForSession(code);
+    if (error) throw error;
+    return data.session;
+  }
+  const { data, error } = await api.auth.getSession();
+  if (error) throw error;
+  if (!data.session) throw new Error('The confirmation link is invalid or has expired.');
+  return data.session;
 }
 
 export async function updatePassword(password: string) {
   const { error } = await client().auth.updateUser({ password });
   if (error) throw error;
+}
+
+export async function updateOwnProfile(fullName: string, phone: string) {
+  const session = await getSession();
+  if (!session) throw new Error('Please sign in again.');
+  const { data, error } = await client().from('profiles')
+    .update({ full_name: fullName.trim(), phone: phone.trim() || null, updated_at: new Date().toISOString() })
+    .eq('id', session.user.id)
+    .select('id,full_name,phone,avatar_path')
+    .single();
+  if (error) throw error;
+  return data;
 }
 
 export async function signOut() {
@@ -116,6 +149,11 @@ export async function updateAdminRecord(table: string, id: string, values: Recor
   const { data, error } = await client().from(table).update(values).eq(idField, id).select().single();
   if (error) throw error;
   return data;
+}
+
+export async function deleteAdminRecord(table: string, id: string, idField = 'id') {
+  const { error } = await client().from(table).delete().eq(idField, id);
+  if (error) throw error;
 }
 
 export async function getAdminOverview() {

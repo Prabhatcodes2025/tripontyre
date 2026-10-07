@@ -19,6 +19,7 @@ import { openPaymentCheckout } from '../lib/payments';
 import {
   ConfigurationError,
   createAdminRecord,
+  completeAuthCallback,
   createBooking,
   createPaymentOrder,
   getRole,
@@ -38,6 +39,7 @@ import {
 } from '../services/platform';
 import { usePublicContent } from '../services/content';
 import type { BookingRecord, TravellerInput, UserRole } from '../types/domain';
+import BrandLogo from '../components/BrandLogo';
 
 const PageIntro = ({ eyebrow, title, copy }: { eyebrow: string; title: string; copy: string }) => (
   <section className="production-intro">
@@ -148,6 +150,20 @@ export function BookingPage() {
   </>;
 }
 
+export function AuthCallback({ resetPassword = false }: { resetPassword?: boolean }) {
+  const [error, setError] = useState('');
+  useEffect(() => {
+    void completeAuthCallback()
+      .then(async session => {
+        if (resetPassword) return window.location.replace('/reset-password');
+        const role = await getRole(session!.user.id);
+        window.location.replace(['admin', 'super_admin'].includes(role) ? '/admin' : '/account');
+      })
+      .catch(caught => setError(caught instanceof Error ? caught.message : 'Authentication could not be completed.'));
+  }, [resetPassword]);
+  return <section className="auth-callback"><BrandLogo/><h1>{error ? 'This link could not be completed.' : 'Confirming your account…'}</h1>{error&&<><p className="form-alert">{error}</p><Link to="/login">Return to sign in</Link></>}</section>;
+}
+
 export function AuthPage({ mode }: { mode: 'login' | 'register' | 'forgot' | 'reset' }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -159,8 +175,8 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' | 'forgot' | 're
     const values = Object.fromEntries(new FormData(event.currentTarget).entries());
     setBusy(true); setMessage(''); setError('');
     try {
-      if (mode === 'login') { await signIn(String(values.email), String(values.password)); navigate('/account'); }
-      if (mode === 'register') { await register(String(values.email), String(values.password), String(values.fullName)); setMessage('Account created. Check your email if confirmation is required, then sign in.'); }
+      if (mode === 'login') { const result=await signIn(String(values.email), String(values.password)); const role=await getRole(result.user.id); navigate(['admin','super_admin'].includes(role)?'/admin':'/account'); }
+      if (mode === 'register') { const result=await register(String(values.email), String(values.password), String(values.fullName)); if(result.session) navigate('/account'); else setMessage('Account created. Check your email to confirm it and continue to your customer dashboard.'); }
       if (mode === 'forgot') { await requestPasswordReset(String(values.email)); setMessage('If the address is registered, a secure reset link has been sent.'); }
       if (mode === 'reset') { await updatePassword(String(values.password)); setMessage('Password updated. You can now continue to your account.'); }
     } catch (caught) {
@@ -169,7 +185,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' | 'forgot' | 're
   }
 
   const title = mode === 'login' ? 'Welcome back.' : mode === 'register' ? 'Create your account.' : mode === 'reset' ? 'Choose a new password.' : 'Reset your password.';
-  return <section className="auth-layout"><div className="auth-image" style={{ backgroundImage: `linear-gradient(#102f3944,#102f39aa),url(${photos.kashmir})` }}><span>MY TRIPON TRAVEL</span><h1>Your journeys,<br/><em>kept together.</em></h1></div><div className="auth-panel"><span>SECURE CUSTOMER PORTAL</span><h2>{title}</h2>{!appConfig.supabaseConfigured && <ServiceState />}<form onSubmit={submit}>{mode === 'register' && <label>Full name<input name="fullName" autoComplete="name" required minLength={2}/></label>}{mode !== 'reset' && <label>Email address<input type="email" name="email" autoComplete="email" required/></label>}{mode !== 'forgot' && <label>{mode === 'reset' ? 'New password' : 'Password'}<input type="password" name="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={8} required/></label>}<button className="button gold" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : mode === 'register' ? 'Create account' : mode === 'reset' ? 'Update password' : 'Send reset link'}</button></form>{message && <p className="form-success" role="status">{message}</p>}{error && <p className="form-alert" role="alert">{error}</p>}<nav>{mode !== 'login' && <Link to="/login">Sign in</Link>}{mode !== 'register' && <Link to="/register">Create account</Link>}{mode !== 'forgot' && mode !== 'reset' && <Link to="/forgot-password">Forgot password?</Link>}{mode === 'reset' && <Link to="/account">Continue to my account</Link>}</nav></div></section>;
+  return <section className="auth-layout"><div className="auth-image" style={{ backgroundImage: `linear-gradient(#102f3944,#102f39aa),url(${photos.kashmir})` }}><BrandLogo/><h1>Your journeys,<br/><em>kept together.</em></h1></div><div className="auth-panel"><BrandLogo/><span>SECURE CUSTOMER PORTAL</span><h2>{title}</h2>{!appConfig.supabaseConfigured && <ServiceState />}<form onSubmit={submit}>{mode === 'register' && <label>Full name<input name="fullName" autoComplete="name" required minLength={2}/></label>}{mode !== 'reset' && <label>Email address<input type="email" name="email" autoComplete="email" required/></label>}{mode !== 'forgot' && <label>{mode === 'reset' ? 'New password' : 'Password'}<input type="password" name="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={8} required/></label>}<button className="button gold" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : mode === 'register' ? 'Create account' : mode === 'reset' ? 'Update password' : 'Send reset link'}</button></form>{message && <p className="form-success" role="status">{message}</p>}{error && <p className="form-alert" role="alert">{error}</p>}<nav>{mode !== 'login' && <Link to="/login">Sign in</Link>}{mode !== 'register' && <Link to="/register">Create account</Link>}{mode !== 'forgot' && mode !== 'reset' && <Link to="/forgot-password">Forgot password?</Link>}{mode === 'reset' && <Link to="/account">Continue to my account</Link>}</nav></div></section>;
 }
 
 export function CustomerPortal() {
