@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, Pause, Play } from 'lucide-react';
 import { photos } from './data';
 import { usePublicContent } from './services/content';
+import BrandLogo from './components/BrandLogo';
 
 type FormProps = { compact?: boolean };
 const travelStyles = [
@@ -11,7 +12,15 @@ const travelStyles = [
   { title:'For the curious', label:'Culture & heritage', image:photos.local, text:'Local flavours, old streets and stories behind the place.' },
   { title:'For the open road', label:'Adventure & outdoors', image:photos.mountains, text:'Fresh air, changing landscapes and room to roam.' },
   { title:'For the shoreline', label:'Beach escapes', image:photos.beach, text:'Salt air, warm light and nowhere else to be.' },
-  { title:'For farther away', label:'International journeys', image:photos.europe, text:'A new country, brought together around your interests.' }
+  { title:'For farther away', label:'International journeys', image:photos.thailand, text:'A new country, brought together around your interests.' }
+];
+
+const clientMontage = [
+  { name:'Desert adventure', region:'DUBAI · TOGETHER', image:photos.clientDesert, note:'A shared day among open dunes and desert light.', focal:'center 64%' },
+  { name:'Nusa Penida', region:'BALI · ISLAND COAST', image:photos.clientNusa, note:'Clifftop paths, bright water and a natural arch by the sea.', focal:'center 58%' },
+  { name:'Beach reflections', region:'COASTAL MOMENTS', image:photos.clientBeach, note:'A wide shoreline, soft light and room to wander.', focal:'center 54%' },
+  { name:'Mountain crossing', region:'NORTH INDIA · OPEN ROAD', image:photos.clientBridge, note:'River stones, mountain air and a road worth taking slowly.', focal:'center 58%' },
+  { name:'Tulip season', region:'KASHMIR · IN BLOOM', image:photos.clientTulips, note:'Rows of colour beneath a clear spring sky.', focal:'center 62%' },
 ];
 
 const montageDefaults = [
@@ -39,9 +48,9 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const navigate = useNavigate();
 
-  const montageFrames = [...montageDefaults, ...heroSlides.map(item => ({ name:item.name, region:item.region, image:item.image, note:item.note }))]
+  const montageFrames = [...clientMontage, ...montageDefaults, ...heroSlides.map(item => ({ name:item.name, region:item.region, image:item.image, note:item.note }))]
     .filter((item, index, all) => all.findIndex(candidate => candidate.image === item.image) === index)
-    .slice(0, 12);
+    .slice(0, 20);
 
   useEffect(() => {
     if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -79,7 +88,7 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
   return <>
     <section className="cinema-hero montage-hero" aria-label="My Tripon Travel moments" aria-roledescription="slideshow" onTouchStart={event=>setTouchStart(event.touches[0].clientX)} onTouchEnd={event=>{if(touchStart===null)return;const distance=event.changedTouches[0].clientX-touchStart;if(Math.abs(distance)>45)setSlide(value=>(value+(distance<0?1:montageFrames.length-1))%montageFrames.length);setTouchStart(null)}}>
       <div className={`montage-frame direction-${slide%4} ${current.image === photos.kashmir ? 'dal-lake-frame' : ''}`} key={`${current.name}-${slide}`}>
-        <img src={current.image} alt={`${current.name} travel moment`} fetchPriority={slide===0?'high':undefined}/>
+        <img src={current.image} alt={`${current.name} travel moment`} style={{objectPosition:'focal' in current ? String(current.focal) : undefined}}/>
       </div>
       <div className="cinema-scrim"/>
       <div className="montage-meta"><span>{current.region}</span><i/><b>{current.name}</b></div>
@@ -87,7 +96,7 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
         <span className="cinema-kicker"><i/> A JOURNEY IN MOMENTS</span>
         {captionPhase===0&&<h1><span>Your Journey....</span><em>Our Plan.....</em></h1>}
         {captionPhase===1&&<h1><span>Stay Stress free.....</span><em>Enjoy with favorites.....</em></h1>}
-        {captionPhase===2&&<h1 className="montage-signature"><span>My Tripon Travel.</span></h1>}
+        {captionPhase===2&&<h1 className="montage-signature"><span className="sr-only">My Tripon Travel.</span><BrandLogo className="hero-brand-logo"/></h1>}
         <p>{current.note}</p>
         <div className="cinema-actions"><Link to="/packages" className="button gold">Explore tours <ArrowRight size={17}/></Link><Link to="/contact" className="cinema-plan">Plan my trip <ArrowUpRight size={16}/></Link></div>
       </div>
@@ -108,7 +117,7 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
       <div className="welcome-images"><img className="welcome-main" src={photos.traveller} alt="Two travellers sharing a view on the road" loading="lazy"/><img className="welcome-inset" src={photos.kerala} alt="Quiet morning on Kerala’s backwaters" loading="lazy"/><span className="welcome-image-caption">A JOURNEY SHAPED AROUND YOU</span></div>
     </section>
 
-    <div className="destination-ticker" aria-label="Destinations"><div className="ticker-track">{[0,1].map(loop=><span key={loop} aria-hidden={loop===1}>{['KASHMIR','KERALA','DUBAI','BALI','THAILAND','MALDIVES','RAJASTHAN','EUROPE'].map(place=><b key={place}>{place}<i>✦</i></b>)}</span>)}</div></div>
+    <div className="destination-ticker" aria-label="Destinations"><div className="ticker-track">{[0,1].map(loop=><span key={loop} aria-hidden={loop===1}>{['KASHMIR','KERALA','DUBAI','BALI','THAILAND','MALDIVES','RAJASTHAN','BHUTAN'].map(place=><b key={place}>{place}<i>✦</i></b>)}</span>)}</div></div>
 
     <section className="world-section section-pad">
       <div className="world-heading"><div><span className="section-overline">PLACES TO GO, STORIES TO FIND</span><h2>The world is<br/><em>waiting.</em></h2></div><div><p>Where would you like to begin? Start with a place that’s been on your mind — we’ll help with the rest.</p><Link to="/destinations" className="line-link">All destinations <ArrowRight size={15}/></Link></div></div>

@@ -1,0 +1,19 @@
+[functions.create-booking]
+verify_jwt = true
+
+[functions.create-payment-order]
+verify_jwt = true
+
+[functions.document-access]
+verify_jwt = true
+
+[functions.submit-lead]
+verify_jwt = false
+
+# Razorpay authenticates this endpoint with its HMAC signature.
+[functions.payment-webhook]
+verify_jwt = false
+
+# This endpoint validates x-internal-secret itself.
+[functions.dispatch-notification]
+verify_jwt = false

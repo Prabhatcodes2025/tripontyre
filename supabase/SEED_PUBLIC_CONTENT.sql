@@ -16,7 +16,8 @@ with seed(slug,name,region,country,state,summary,hero_image,featured,published) 
     ($seed$dubai$seed$,$seed$Dubai$seed$,$seed$City & desert · UAE$seed$,$seed$United Arab Emirates$seed$,null,$seed$A modern skyline, neighbourhood culture and open desert beyond the city.$seed$,$seed$https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1600&q=85$seed$,false,true),
     ($seed$thailand$seed$,$seed$Thailand$seed$,$seed$Culture · Southeast Asia$seed$,$seed$Thailand$seed$,null,$seed$Food, culture, coastlines and routes that can move at your pace.$seed$,$seed$https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1600&q=85$seed$,false,true),
     ($seed$maldives$seed$,$seed$Maldives$seed$,$seed$Island escape · Indian Ocean$seed$,$seed$Maldives$seed$,null,$seed$Warm water, long horizons and days designed to move gently.$seed$,$seed$https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1600&q=85$seed$,false,true),
-    ($seed$europe$seed$,$seed$Europe$seed$,$seed$Culture · Across Europe$seed$,$seed$Europe$seed$,null,$seed$City streets, regional routes and journeys shaped around your interests.$seed$,$seed$https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1600&q=85$seed$,false,true)
+    -- Historical record retained but no longer promoted as a current offer.
+    ($seed$europe$seed$,$seed$Europe$seed$,$seed$Culture · Across Europe$seed$,$seed$Europe$seed$,null,$seed$City streets, regional routes and journeys shaped around your interests.$seed$,$seed$https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1600&q=85$seed$,false,false)
 )
 insert into public.destinations(slug,name,region,country,state,summary,hero_image,featured,published)
 select slug,name,region,country,state,summary,hero_image,featured,published from seed

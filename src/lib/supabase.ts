@@ -6,7 +6,8 @@ export const supabase = url && key ? createClient(url, key, {
     flowType: 'pkce',
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    // PKCE codes are exchanged explicitly by /auth/callback to avoid a double exchange race.
+    detectSessionInUrl: false,
   },
 }) : null;
 

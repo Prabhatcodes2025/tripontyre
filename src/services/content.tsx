@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { destinations as fallbackDestinations, gallery as fallbackGallery, packages as fallbackPackages, photos } from '../data';
+import { categoryLabels, destinations as fallbackDestinations, gallery as fallbackGallery, packages as fallbackPackages, photos, type Destination, type PackageCategory, type TourPackage } from '../data';
 import { supabase } from '../lib/supabase';
 
-export type PublicDestination = (typeof fallbackDestinations)[number];
-export type PublicPackage = (typeof fallbackPackages)[number];
+export type PublicDestination = Destination;
+export type PublicPackage = TourPackage;
 export type PublicHeroSlide = {
   name: string;
   region: string;
@@ -83,8 +83,8 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
     let active = true;
     void (async () => {
       const [destinationResult, packageResult, galleryResult, heroResult, serviceResult, blogResult, eventResult, faqResult, testimonialResult, awardResult] = await Promise.all([
-        supabase.from('destinations').select('slug,name,region,country,state,summary,hero_image').eq('published', true).order('featured', { ascending:false }).order('name'),
-        supabase.from('tour_packages').select('slug,title,duration_days,duration_nights,summary,description,hero_image,trip_style,destinations(name,country,state),tour_itinerary_days(day_number,location)').eq('published', true).order('featured', { ascending:false }).order('created_at'),
+        supabase.from('destinations').select('slug,name,region,country,state,summary,hero_image,primary_category').eq('published', true).order('featured', { ascending:false }).order('name'),
+        supabase.from('tour_packages').select('slug,title,category,is_upcoming,duration_days,duration_nights,summary,description,hero_image,trip_style,base_price,destinations(name,country,state),tour_itinerary_days(day_number,location)').eq('published', true).order('featured', { ascending:false }).order('created_at'),
         supabase.from('gallery_items').select('media_url').eq('published', true).eq('media_type', 'image').order('display_order'),
         supabase.from('hero_slides').select('title,subtitle,image_url,alt_text,destinations(name,region,country,state)').eq('published', true).order('display_order'),
         supabase.from('travel_services').select('name,description').eq('published', true).order('name'),
@@ -99,7 +99,8 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
       const liveDestinations = (destinationResult.data || []).map(row => ({
         name: text(row.name),
         slug: text(row.slug),
-        label: [text(row.region), text(row.state), text(row.country)].filter(Boolean).join(' · ') || 'Travel destination',
+        category: (['domestic','international','strangers_meetup'].includes(text(row.primary_category)) ? text(row.primary_category) : 'domestic') as PackageCategory,
+        label: categoryLabels[(['domestic','international','strangers_meetup'].includes(text(row.primary_category)) ? text(row.primary_category) : 'domestic') as PackageCategory],
         image: text(row.hero_image) || photos.hero,
       })).filter(item => item.name && item.slug);
 
@@ -107,17 +108,22 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         const destination = Array.isArray(row.destinations) ? row.destinations[0] : row.destinations;
         const itinerary = [...(row.tour_itinerary_days || [])].sort((a, b) => Number(a.day_number) - Number(b.day_number));
         const route = itinerary.map(day => text(day.location)).filter((value, index, all) => value && value !== all[index - 1]).join(' → ');
-        const days = Number(row.duration_days) || Math.max(itinerary.length, 1);
+        const days = Number(row.duration_days) || 0;
         const nights = Number(row.duration_nights);
+        const category = (['domestic','international','strangers_meetup'].includes(text(row.category)) ? text(row.category) : 'domestic') as PackageCategory;
+        const detailsAvailable = Boolean(days || itinerary.length || row.base_price || text(row.description));
         return {
           title: text(row.title),
           place: [text(destination?.name), text(destination?.country)].filter(Boolean).join(', ') || 'Custom destination',
-          duration: `${days} day${days === 1 ? '' : 's'}${Number.isFinite(nights) ? ` · ${nights} night${nights === 1 ? '' : 's'}` : ''}`,
-          style: text(row.trip_style) || 'Tailored journey',
+          duration: days ? `${days} day${days === 1 ? '' : 's'}${Number.isFinite(nights) && nights > 0 ? ` · ${nights} night${nights === 1 ? '' : 's'}` : ''}` : 'Details coming soon',
+          style: text(row.trip_style) || categoryLabels[category],
           image: text(row.hero_image) || photos.hero,
           slug: text(row.slug),
           route: route || text(destination?.name) || 'Route confirmed with your trip planner',
-          desc: text(row.summary) || text(row.description) || 'A thoughtfully paced journey shaped around you.',
+          desc: text(row.summary) || text(row.description) || 'Details coming soon. Ask our travel team to register your interest.',
+          category,
+          upcoming: Boolean(row.is_upcoming),
+          detailsAvailable,
         };
       }).filter(item => item.title && item.slug);
 

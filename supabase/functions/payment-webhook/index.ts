@@ -29,19 +29,14 @@ Deno.serve(async request => {
     const paymentEntity = payload?.payload?.payment?.entity;
     const orderId = paymentEntity?.order_id;
     if (!orderId) return json({ received: true, ignored: true });
-    const { data: payment, error: paymentError } = await admin.from('payments').select('*').eq('provider','razorpay').eq('provider_order_id',orderId).single();
-    if (paymentError || !payment || Number(paymentEntity.amount) !== payment.amount || paymentEntity.currency !== payment.currency) throw new Error('Payment amount or currency verification failed');
     const success = payload.event === 'payment.captured';
     const failed = payload.event === 'payment.failed';
-    if (success || failed) {
-      await admin.from('payments').update({ status: success ? 'success' : 'failed', provider_payment_id: paymentEntity.id, verified_at: success ? new Date().toISOString() : null, failure_code: failed ? paymentEntity.error_code : null, provider_payload: payload }).eq('id', payment.id);
-      if (success) {
-        const { data: booking } = await admin.from('bookings').select('paid_amount,total_amount').eq('id',payment.booking_id).single();
-        const paid = Math.min((booking?.paid_amount || 0) + payment.amount, booking?.total_amount || payment.amount);
-        await admin.from('bookings').update({ paid_amount:paid, balance_amount:Math.max(0,(booking?.total_amount || 0)-paid), payment_status:'success', booking_status:'confirmed' }).eq('id',payment.booking_id);
-      }
-    }
-    await admin.from('payment_webhook_events').update({ processed_at:new Date().toISOString() }).eq('id',event.id);
+    const {error:applyError}=await admin.rpc('apply_payment_webhook_event',{
+      p_event_id:event.id,p_order_id:orderId,p_payment_id:String(paymentEntity.id||''),
+      p_amount:Number(paymentEntity.amount),p_currency:String(paymentEntity.currency||''),
+      p_state:success?'success':failed?'failed':'ignored',p_failure_code:failed?String(paymentEntity.error_code||''):null,p_payload:payload,
+    });
+    if(applyError)throw applyError;
     return json({ received: true });
   } catch (error) { return safeError(error); }
 });
