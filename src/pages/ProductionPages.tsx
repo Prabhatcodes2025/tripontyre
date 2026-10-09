@@ -355,7 +355,7 @@ export function AdminPage() {
               const uploadedImage=await uploadSiteMedia(files[index],{folder:field.folder||active.table,onProgress:progress=>setUploadProgress(Math.round(((index+progress/100)/files.length)*100))});
               uploaded.push({path:uploadedImage.path,value:field.storeAs==='path'?uploadedImage.path:uploadedImage.publicUrl,field});
             }
-            values[field.key]=field.multiple?uploaded.filter(item=>item.field.key===field.key).map(item=>item.value):uploaded.at(-1)?.value;
+            values[field.key]=field.multiple?uploaded.filter(item=>item.field.key===field.key).map(item=>item.value):uploaded.length?uploaded[uploaded.length-1].value:undefined;
           }else if(removedMedia.includes(field.key))values[field.key]=null;
           else if(!editingId&&field.required)throw new Error(`${field.label} is required.`);
           continue;
