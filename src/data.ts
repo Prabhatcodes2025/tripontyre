@@ -65,7 +65,7 @@ const imageFor = (name: string, category: PackageCategory) => {
 export type Destination = { name: string; label: string; slug: string; image: string; category: PackageCategory };
 export type TourPackage = {
   title: string; place: string; duration: string; style: string; image: string; slug: string;
-  route: string; desc: string; category: PackageCategory; upcoming: boolean; detailsAvailable: boolean;
+  route: string; desc: string; category: PackageCategory; upcoming: boolean; detailsAvailable: boolean; gallery?: string[];
 };
 
 export const destinations: Destination[] = (Object.entries(catalogue) as [PackageCategory, string[]][]).flatMap(([category, names]) =>

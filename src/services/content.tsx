@@ -80,11 +80,12 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) return;
+    const api = supabase;
     let active = true;
     void (async () => {
       const [destinationResult, packageResult, galleryResult, heroResult, serviceResult, blogResult, eventResult, faqResult, testimonialResult, awardResult] = await Promise.all([
         supabase.from('destinations').select('slug,name,region,country,state,summary,hero_image,primary_category').eq('published', true).order('featured', { ascending:false }).order('name'),
-        supabase.from('tour_packages').select('slug,title,category,is_upcoming,duration_days,duration_nights,summary,description,hero_image,trip_style,base_price,destinations(name,country,state),tour_itinerary_days(day_number,location)').eq('published', true).order('featured', { ascending:false }).order('created_at'),
+        supabase.from('tour_packages').select('slug,title,category,is_upcoming,duration_days,duration_nights,summary,description,hero_image,trip_style,base_price,destinations(name,country,state),tour_itinerary_days(day_number,location),package_images(storage_path,display_order,is_cover)').eq('published', true).order('featured', { ascending:false }).order('created_at'),
         supabase.from('gallery_items').select('media_url').eq('published', true).eq('media_type', 'image').order('display_order'),
         supabase.from('hero_slides').select('title,subtitle,image_url,alt_text,destinations(name,region,country,state)').eq('published', true).order('display_order'),
         supabase.from('travel_services').select('name,description').eq('published', true).order('name'),
@@ -112,12 +113,19 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         const nights = Number(row.duration_nights);
         const category = (['domestic','international','strangers_meetup'].includes(text(row.category)) ? text(row.category) : 'domestic') as PackageCategory;
         const detailsAvailable = Boolean(days || itinerary.length || row.base_price || text(row.description));
+        const packageImages = [...(row.package_images || [])]
+          .sort((a, b) => Number(Boolean(b.is_cover)) - Number(Boolean(a.is_cover)) || Number(a.display_order) - Number(b.display_order))
+          .map(item => text(item.storage_path))
+          .filter(Boolean)
+          .map(path => api.storage.from('site-media').getPublicUrl(path).data.publicUrl);
+        const primaryImage = text(row.hero_image) || packageImages[0] || photos.hero;
         return {
           title: text(row.title),
           place: [text(destination?.name), text(destination?.country)].filter(Boolean).join(', ') || 'Custom destination',
           duration: days ? `${days} day${days === 1 ? '' : 's'}${Number.isFinite(nights) && nights > 0 ? ` · ${nights} night${nights === 1 ? '' : 's'}` : ''}` : 'Details coming soon',
           style: text(row.trip_style) || categoryLabels[category],
-          image: text(row.hero_image) || photos.hero,
+          image: primaryImage,
+          gallery: [primaryImage, ...packageImages].filter((value, index, all) => all.indexOf(value) === index),
           slug: text(row.slug),
           route: route || text(destination?.name) || 'Route confirmed with your trip planner',
           desc: text(row.summary) || text(row.description) || 'Details coming soon. Ask our travel team to register your interest.',
