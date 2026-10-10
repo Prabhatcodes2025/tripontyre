@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { categoryLabels, destinations as fallbackDestinations, gallery as fallbackGallery, packages as fallbackPackages, photos, type Destination, type PackageCategory, type TourPackage } from '../data';
+import { categoryLabels, destinations as fallbackDestinations, gallery as fallbackGallery, packages as fallbackPackages, photos, type Destination, type GalleryPhoto, type PackageCategory, type TourPackage } from '../data';
 import { supabase } from '../lib/supabase';
 
 export type PublicDestination = Destination;
@@ -49,7 +49,7 @@ const fallbackFaqs: PublicContentItem[] = [
 type PublicContent = {
   destinations: PublicDestination[];
   packages: PublicPackage[];
-  gallery: string[];
+  gallery: GalleryPhoto[];
   heroSlides: PublicHeroSlide[];
   services: PublicService[];
   blogs: PublicContentItem[];
@@ -86,7 +86,7 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
       const [destinationResult, packageResult, galleryResult, heroResult, serviceResult, blogResult, eventResult, faqResult, testimonialResult, awardResult] = await Promise.all([
         supabase.from('destinations').select('slug,name,region,country,state,summary,hero_image,primary_category').eq('published', true).order('featured', { ascending:false }).order('name'),
         supabase.from('tour_packages').select('slug,title,category,is_upcoming,duration_days,duration_nights,summary,description,hero_image,trip_style,base_price,destinations(name,country,state),tour_itinerary_days(day_number,location),package_images(storage_path,display_order,is_cover)').eq('published', true).order('featured', { ascending:false }).order('created_at'),
-        supabase.from('gallery_items').select('media_url').eq('published', true).eq('media_type', 'image').order('display_order'),
+        supabase.from('gallery_items').select('media_url,title,alt_text').eq('published', true).eq('media_type', 'image').order('display_order'),
         supabase.from('hero_slides').select('title,subtitle,image_url,alt_text,destinations(name,region,country,state)').eq('published', true).order('display_order'),
         supabase.from('travel_services').select('name,description').eq('published', true).order('name'),
         supabase.from('blogs').select('slug,title,excerpt,cover_image').eq('published', true).order('published_at', { ascending:false }),
@@ -135,7 +135,11 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         };
       }).filter(item => item.title && item.slug);
 
-      const liveGallery = (galleryResult.data || []).map(row => text(row.media_url)).filter(Boolean);
+      const liveGallery = (galleryResult.data || []).map(row => ({
+        src: text(row.media_url),
+        title: text(row.title) || 'My Tripon travel moment',
+        alt: text(row.alt_text) || text(row.title) || 'My Tripon travel photograph',
+      })).filter(item => Boolean(item.src));
       const liveHeroes = (heroResult.data || []).map(row => {
         const destination = Array.isArray(row.destinations) ? row.destinations[0] : row.destinations;
         return {

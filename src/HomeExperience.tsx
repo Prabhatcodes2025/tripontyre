@@ -4,11 +4,12 @@ import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, Pause, Play } from 'lucide
 import { photos } from './data';
 import { usePublicContent } from './services/content';
 import BrandLogo from './components/BrandLogo';
+import { company } from './company';
 
 type FormProps = { compact?: boolean };
 const travelStyles = [
   { title:'For two', label:'Honeymoon & couples', image:photos.couple, text:'Unhurried days, thoughtful details, time together.' },
-  { title:'For everyone', label:'Family holidays', image:photos.family, text:'A good pace for little legs and long conversations.' },
+  { title:'For everyone', label:'Group holidays', image:photos.clientDesert, text:'Shared days, open landscapes and stories to bring home together.' },
   { title:'For the curious', label:'Culture & heritage', image:photos.local, text:'Local flavours, old streets and stories behind the place.' },
   { title:'For the open road', label:'Adventure & outdoors', image:photos.mountains, text:'Fresh air, changing landscapes and room to roam.' },
   { title:'For the shoreline', label:'Beach escapes', image:photos.beach, text:'Salt air, warm light and nowhere else to be.' },
@@ -20,21 +21,23 @@ const clientMontage = [
   { name:'Nusa Penida', region:'BALI · ISLAND COAST', image:photos.clientNusa, note:'Clifftop paths, bright water and a natural arch by the sea.', focal:'center 58%' },
   { name:'Beach reflections', region:'COASTAL MOMENTS', image:photos.clientBeach, note:'A wide shoreline, soft light and room to wander.', focal:'center 54%' },
   { name:'Mountain crossing', region:'NORTH INDIA · OPEN ROAD', image:photos.clientBridge, note:'River stones, mountain air and a road worth taking slowly.', focal:'center 58%' },
-  { name:'Tulip season', region:'KASHMIR · IN BLOOM', image:photos.clientTulips, note:'Rows of colour beneath a clear spring sky.', focal:'center 62%' },
+  { name:'Tulip Gardens, Kashmir', region:'SRINAGAR · KASHMIR IN BLOOM', image:photos.clientTulips, note:'Rows of spring colour at Kashmir’s Tulip Gardens.', focal:'center 62%' },
+  { name:'A street of your own', region:'WANDER AT YOUR OWN PACE', image:photos.traveller, note:'A backpack, a quiet street and time to follow your curiosity.', focal:'center 53%' },
+  { name:'Wild horizons', region:'NATURE · OPEN SPACES', image:photos.tree, note:'A beautiful tree, warm evening light and room to breathe.', focal:'center 56%' },
 ];
 
 const montageDefaults = [
   { name:'Kashmir', region:'MOUNTAIN AIR', image:photos.kashmir, note:'Lake mornings and open Himalayan views.' },
-  { name:'Together', region:'FRIENDS ON THE ROAD', image:photos.traveller, note:'The stories are always better when they are shared.' },
+  { name:'A street of your own', region:'WANDER AT YOUR OWN PACE', image:photos.traveller, note:'A backpack, a quiet street and time to follow your curiosity.' },
   { name:'Kerala', region:'BACKWATER RHYTHMS', image:photos.kerala, note:'Quiet water, green horizons and room to slow down.' },
   { name:'Dubai', region:'CITY & DESERT', image:photos.dubai, note:'Bright skylines and a different world beyond them.' },
   { name:'For two', region:'JOURNEYS TOGETHER', image:photos.couple, note:'Time away, planned around the two of you.' },
   { name:'Bali', region:'CULTURE & ISLAND LIFE', image:photos.bali, note:'Temple courtyards, local rituals and the sea.' },
-  { name:'Family days', region:'EVERYONE INCLUDED', image:photos.family, note:'A pace that leaves space for every generation.' },
-  { name:'Open road', region:'THE SCENIC WAY', image:photos.coast, note:'Take the road that makes the journey part of the story.' },
+  { name:'The open road', region:'ROAD TRIP · WIDE HORIZONS', image:photos.family, note:'A winding road, red-rock country and the scenic way through.' },
+  { name:'Nusa Penida coast', region:'BALI · ISLAND COAST', image:photos.coast, note:'Clifftop paths and bright water shaped by the sea.' },
   { name:'Maldives', region:'RESORT ESCAPE', image:photos.maldives, note:'Warm water and long, unhurried horizons.' },
-  { name:'Local stories', region:'CULTURE UP CLOSE', image:photos.local, note:'Meet the place, not only the postcard.' },
-  { name:'Adventure', region:'OUT IN THE WILD', image:photos.mountains, note:'Fresh air, changing ground and a little courage.' },
+  { name:'A street of your own', region:'CULTURE UP CLOSE', image:photos.local, note:'Meet the place one quiet street at a time.' },
+  { name:'Mountain crossing', region:'NORTH INDIA · OPEN ROAD', image:photos.mountains, note:'River stones, mountain air and a bridge along the way.' },
   { name:'Goa', region:'BEACH LIGHT', image:photos.goa, note:'Salt air, easy evenings and nowhere else to be.' },
 ];
 
@@ -49,8 +52,7 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
   const navigate = useNavigate();
 
   const montageFrames = [...clientMontage, ...montageDefaults, ...heroSlides.map(item => ({ name:item.name, region:item.region, image:item.image, note:item.note }))]
-    .filter((item, index, all) => all.findIndex(candidate => candidate.image === item.image) === index)
-    .slice(0, 20);
+    .filter((item, index, all) => all.findIndex(candidate => candidate.image === item.image) === index);
 
   useEffect(() => {
     if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -114,7 +116,7 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
 
     <section className="welcome-editorial" id="welcome">
       <div className="welcome-copy"><span className="section-overline">EXPLORE <i>•</i> EXPERIENCE <i>•</i> ENJOY</span><h2>We don’t just plan trips.<br/><em>We help shape the stories<br/>you’ll bring home.</em></h2><p>Somewhere new has a way of staying with you. We bring the route, the details and the breathing room together around the holiday you want to have.</p><Link to="/about" className="line-link">Meet My Tripon Travel <ArrowRight size={15}/></Link><span className="welcome-signature">My Tripon Travel <i>·</i> Delhi, India</span></div>
-      <div className="welcome-images"><img className="welcome-main" src={photos.traveller} alt="Two travellers sharing a view on the road" loading="lazy"/><img className="welcome-inset" src={photos.kerala} alt="Quiet morning on Kerala’s backwaters" loading="lazy"/><span className="welcome-image-caption">A JOURNEY SHAPED AROUND YOU</span></div>
+      <div className="welcome-images"><img className="welcome-main" src={photos.traveller} alt="A traveller with a backpack exploring a historic street" loading="lazy"/><img className="welcome-inset" src={photos.kerala} alt="Quiet morning on Kerala’s backwaters" loading="lazy"/><span className="welcome-image-caption">A JOURNEY SHAPED AROUND YOU</span></div>
     </section>
 
     <div className="destination-ticker" aria-label="Destinations"><div className="ticker-track">{[0,1].map(loop=><span key={loop} aria-hidden={loop===1}>{['KASHMIR','KERALA','DUBAI','BALI','THAILAND','MALDIVES','RAJASTHAN','BHUTAN'].map(place=><b key={place}>{place}<i>✦</i></b>)}</span>)}</div></div>
@@ -146,12 +148,12 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
 
     <section className="cinema-break" style={{backgroundImage:`linear-gradient(90deg,rgba(11,38,45,.6),rgba(11,38,45,.12)),url(${photos.mountains})`}}><div><span className="section-overline">EXPLORE · EXPERIENCE · ENJOY</span><h2>Go where you<br/><em>feel most alive.</em></h2><Link to="/contact" className="cinema-plan">Start planning <ArrowUpRight size={16}/></Link></div><span className="cinema-break-note">SOMEWHERE NEW IS CLOSER THAN YOU THINK</span></section>
 
-    <section className="traveller-wall section-pad"><div className="world-heading"><div><span className="section-overline">TRAVEL LOOKS BETTER WHEN IT’S REAL</span><h2>Little moments.<br/><em>Long afterglow.</em></h2></div><div><p>Shared views, new rituals and familiar faces in unfamiliar places.</p><Link to="/gallery" className="line-link">See more travel stories <ArrowRight size={15}/></Link></div></div><div className="memory-wall">{gallery.slice(0,7).map((image,index)=><Link to="/gallery" className={`memory memory-${index+1}`} key={image}><img src={image} alt={['Travellers taking in the view','Houseboat on the Kerala backwaters','A couple on a trip together','Taj Mahal at sunrise','Family outdoors on holiday','Local culture and place','Coastal escape'][index]} loading="lazy"/><span>{['KASHMIR · WITH FRIENDS','KERALA · SLOW MORNINGS','A LITTLE TIME FOR TWO','AGRA · FIRST LIGHT','FAMILY DAYS','CULTURE & PLACE','BY THE WATER'][index]}</span></Link>)}</div><Link to="/gallery" className="line-link wall-link">See more travel stories <ArrowRight size={15}/></Link></section>
+    <section className="traveller-wall section-pad"><div className="world-heading"><div><span className="section-overline">TRAVEL LOOKS BETTER WHEN IT’S REAL</span><h2>Little moments.<br/><em>Long afterglow.</em></h2></div><div><p>Shared views, new rituals and familiar faces in unfamiliar places.</p><Link to="/gallery" className="line-link">See more travel stories <ArrowRight size={15}/></Link></div></div><div className="memory-wall">{gallery.slice(0,7).map((photo,index)=><Link to="/gallery" className={`memory memory-${index+1}`} key={photo.src}><img src={photo.src} alt={photo.alt} loading="lazy"/><span>{photo.title.toUpperCase()}</span></Link>)}</div><Link to="/gallery" className="line-link wall-link">See more travel stories <ArrowRight size={15}/></Link></section>
 
-    <section className="why-editorial section-pad"><div className="why-statement"><span className="section-overline">THE MY TRIPON APPROACH</span><h2>Your holiday<br/>deserves more<br/><em>than a template.</em></h2><img src={photos.local} alt="A glimpse of local life on the road" loading="lazy"/><p>Good planning starts with listening. Then it brings the details together around your people, your pace and what you’d like to discover.</p><Link to="/about" className="line-link">A little about our approach <ArrowRight size={15}/></Link></div><div className="why-list">{[['01','Trips shaped around you'],['02','Thoughtful itinerary planning'],['03','Support through your journey'],['04','Domestic & international experiences']].map(([num,title])=><div key={num}><span>{num}</span><h3>{title}</h3><ArrowUpRight size={17}/></div>)}</div></section>
+    <section className="why-editorial section-pad"><div className="why-statement"><span className="section-overline">THE MY TRIPON APPROACH</span><h2>Your holiday<br/>deserves more<br/><em>than a template.</em></h2><img src={photos.local} alt="A traveller with a backpack walking through a historic street" loading="lazy"/><p>Good planning starts with listening. Then it brings the details together around your people, your pace and what you’d like to discover.</p><Link to="/about" className="line-link">A little about our approach <ArrowRight size={15}/></Link></div><div className="why-list">{[['01','Trips shaped around you'],['02','Thoughtful itinerary planning'],['03','Support through your journey'],['04','Domestic & international experiences']].map(([num,title])=><div key={num}><span>{num}</span><h3>{title}</h3><ArrowUpRight size={17}/></div>)}</div></section>
 
     <section className="journal-editorial section-pad"><div className="world-heading"><div><span className="section-overline">THE TRIPON JOURNAL</span><h2>For the curious<br/><em>and the almost-ready.</em></h2></div><div><p>Small notes about places, seasons and the details that help a trip take shape.</p><Link to="/destinations" className="line-link">Explore the places <ArrowRight size={15}/></Link></div></div><div className="journal-featured"><Link to={journal[0].to} className="journal-lead"><img src={journal[0].image} alt="Traditional boat in Kerala" loading="lazy"/><span>{journal[0].category}</span><h3>{journal[0].title}</h3><b>Read the field note <ArrowUpRight size={15}/></b></Link><div className="journal-secondary">{journal.slice(1).map(story=><Link to={story.to} key={story.title}><img src={story.image} alt="" loading="lazy"/><span><small>{story.category}</small><b>{story.title}</b><i>Read the note <ArrowUpRight size={14}/></i></span></Link>)}</div></div></section>
 
-    <section className="enquiry-editorial" id="plan"><div className="enquiry-image"><img src={photos.boat} alt="A quiet journey on the water" loading="lazy"/><div><span className="section-overline">A GOOD PLACE TO START</span><h2>Let’s plan<br/><em>something amazing.</em></h2><p>Tell us a little about the trip you have in mind. We’ll help you take it from there.</p><a href="tel:+917034991100">+91 70349 91100 <ArrowUpRight size={15}/></a></div></div><div className="enquiry-panel"><span className="section-overline">YOUR TRIP, IN YOUR WORDS</span><h3>Where are you dreaming of?</h3><EnquiryForm/></div></section>
+    <section className="enquiry-editorial" id="plan"><div className="enquiry-image"><img src={photos.boat} alt="A quiet journey on the water" loading="lazy"/><div><span className="section-overline">A GOOD PLACE TO START</span><h2>Let’s plan<br/><em>something amazing.</em></h2><p>Tell us a little about the trip you have in mind. We’ll help you take it from there.</p><a href={company.corporateOffice.phoneHref}>+91 {company.corporateOffice.phone} <ArrowUpRight size={15}/></a></div></div><div className="enquiry-panel"><span className="section-overline">YOUR TRIP, IN YOUR WORDS</span><h3>Where are you dreaming of?</h3><EnquiryForm/></div></section>
   </>;
 }

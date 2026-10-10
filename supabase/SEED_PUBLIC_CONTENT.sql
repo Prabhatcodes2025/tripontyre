@@ -157,6 +157,21 @@ on conflict(section_key) do update set
   title=excluded.title, content=excluded.content,
   display_order=excluded.display_order, published=excluded.published;
 
+-- Canonical public company details used by the Footer and Site Settings modules.
+insert into public.site_settings(key,value)
+values (
+  'company_contact',
+  jsonb_build_object(
+    'public', true,
+    'legalName', 'My Tripon Travel Pvt. Ltd.',
+    'corporateOffice', jsonb_build_object('address','Mahipalpur, Delhi - 110037','phone','7592999111'),
+    'kozhikodeOffice', jsonb_build_object('address','Sky Tower, Major Road Junction, Kozhikode','phone','7592883311'),
+    'additionalOffices', jsonb_build_array('Bengaluru','Hyderabad','Mumbai'),
+    'email', 'infomytripontravel@gmail.com'
+  )
+)
+on conflict(key) do update set value=excluded.value,updated_at=now();
+
 -- No events are inserted: public event listings must represent real,
 -- confirmed dates supplied by My Tripon Travel.
 

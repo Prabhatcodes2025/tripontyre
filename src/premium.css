@@ -65,6 +65,8 @@ body{font-size:clamp(16px,.35vw + 14px,18px);line-height:1.72}.nav>a:not(.nav-ct
 .official-brand__mark img{position:static!important;width:100%!important;height:auto!important;max-width:100%!important;margin:0!important;object-fit:contain!important;filter:none!important;mix-blend-mode:normal!important}
 .official-brand__wordmark{display:block;width:116px;flex:none}
 .official-brand__wordmark img{position:static!important;width:100%!important;height:auto!important;max-width:100%!important;margin:0!important;object-fit:contain!important;filter:none!important;mix-blend-mode:normal!important}
+.official-brand__identity{display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:0}
+.official-brand__legal{display:block;color:var(--ink);font:700 6.5px/1.1 var(--sans);letter-spacing:.055em;white-space:nowrap;text-transform:none}
 .brand{width:170px;height:52px;display:flex;align-items:center;overflow:hidden}
 .brand>.official-brand{transform:scale(.94);transform-origin:left center}
 .footer-brand>.official-brand{padding:4px;margin-bottom:10px}
@@ -72,6 +74,9 @@ body{font-size:clamp(16px,.35vw + 14px,18px);line-height:1.72}.nav>a:not(.nav-ct
 .hero-brand-logo{filter:drop-shadow(0 5px 18px #03151d) drop-shadow(0 1px 2px #fff8)}
 .hero-brand-logo .official-brand__mark{width:clamp(66px,8vw,108px);transform:translateY(7px)}
 .hero-brand-logo .official-brand__wordmark{width:clamp(210px,28vw,430px)}
+.hero-brand-logo .official-brand__legal{color:#fff;font-size:clamp(8px,1vw,13px);letter-spacing:.08em;text-shadow:0 2px 8px #03151d}
+.footer-brand .official-brand__legal,.admin-brand .official-brand__legal,.account-mark .official-brand__legal,.auth-image .official-brand__legal{color:#f3f5ef}
+.footer-contact>b{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#e6b943;margin-top:4px}.company-email{overflow-wrap:anywhere}
 .montage-copy .montage-signature{min-height:clamp(110px,14vw,185px);display:flex;align-items:center}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .auth-callback{min-height:70vh;display:grid;place-content:center;justify-items:center;gap:18px;text-align:center;padding:7%}.auth-callback h1{font:600 clamp(32px,5vw,55px) var(--serif);margin:0}.auth-callback p{max-width:560px}

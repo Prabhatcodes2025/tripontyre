@@ -13,9 +13,10 @@ export const photos = {
   family: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=85',
   mountains: '/travel/mountain-river-bridge.webp',
   coast: '/travel/nusa-penida.webp',
-  traveller: '/travel/desert-convoy.webp',
+  traveller: '/travel/street-traveller.jpg',
   couple: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1000&q=85',
-  local: '/travel/tulip-garden.webp',
+  local: '/travel/street-traveller.jpg',
+  tree: '/travel/beautiful-tree.jpg',
   boat: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=85',
   clientDesert: '/travel/desert-convoy.webp',
   clientNusa: '/travel/nusa-penida.webp',
@@ -52,6 +53,7 @@ const upcomingNames = new Set(['Thailand', 'Rajasthan', 'Delhi - Agra - Jaipur -
 const slugify = (value: string) => value.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const imageFor = (name: string, category: PackageCategory) => {
   const lower = name.toLowerCase();
+  if (lower === 'kashmir') return photos.clientTulips;
   if (lower.includes('kashmir') || lower.includes('ladakh') || lower.includes('manali') || lower.includes('kasol')) return photos.clientBridge;
   if (lower.includes('bali') || lower.includes('indonesia')) return photos.clientNusa;
   if (lower.includes('goa') || lower.includes('gokarna') || lower.includes('andaman') || lower.includes('lakshadweep') || lower.includes('maldives')) return photos.clientBeach;
@@ -59,7 +61,7 @@ const imageFor = (name: string, category: PackageCategory) => {
   if (lower.includes('rajasthan')) return photos.rajasthan;
   if (lower.includes('kerala') || lower.includes('munnar') || lower.includes('vagamon') || lower.includes('wayanad') || lower.includes('athirappalli')) return photos.kerala;
   if (lower.includes('thailand')) return photos.thailand;
-  return category === 'international' ? photos.bali : photos.clientTulips;
+  return category === 'international' ? photos.traveller : photos.tree;
 };
 
 export type Destination = { name: string; label: string; slug: string; image: string; category: PackageCategory };
@@ -87,4 +89,18 @@ export const packages: TourPackage[] = destinations.map(destination => ({
 }));
 
 export const catalogueCounts = Object.fromEntries(Object.entries(catalogue).map(([key, values]) => [key, values.length])) as Record<PackageCategory, number>;
-export const gallery = [photos.clientDesert, photos.clientNusa, photos.clientBeach, photos.clientBridge, photos.clientTulips, photos.couple, photos.taj, photos.family, photos.kerala, photos.boat];
+export type GalleryPhoto = { src:string; title:string; alt:string };
+export const gallery:GalleryPhoto[] = [
+  {src:photos.clientDesert,title:'Dubai desert adventure',alt:'My Tripon travellers beside their desert convoy in Dubai'},
+  {src:photos.clientNusa,title:'Nusa Penida coast',alt:'Natural rock arch and blue water at Nusa Penida, Bali'},
+  {src:photos.clientBeach,title:'Coastal reflections',alt:'Travellers walking across a reflective beach at low tide'},
+  {src:photos.clientBridge,title:'Mountain river crossing',alt:'Bridge over a rocky mountain river in North India'},
+  {src:photos.clientTulips,title:'Tulip Gardens, Kashmir',alt:'Rows of red, white and pink tulips at Tulip Gardens in Kashmir'},
+  {src:photos.couple,title:'Plan for Two',alt:'Two flower-decorated chairs prepared for a romantic experience'},
+  {src:photos.traveller,title:'A street of your own',alt:'A woman with a backpack walking through a historic street'},
+  {src:photos.tree,title:'Wild horizons',alt:'A beautiful spreading tree silhouetted against a warm sunset'},
+  {src:photos.taj,title:'Agra at first light',alt:'The Taj Mahal in Agra'},
+  {src:photos.family,title:'The open road',alt:'A road winding through a red-rock landscape'},
+  {src:photos.kerala,title:'Kerala backwaters',alt:'A traditional houseboat on Kerala’s backwaters'},
+  {src:photos.boat,title:'Time on the water',alt:'A quiet travel experience on the water'},
+];
