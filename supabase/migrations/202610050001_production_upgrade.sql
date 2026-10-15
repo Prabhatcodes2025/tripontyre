@@ -5,7 +5,7 @@
 create extension if not exists pgcrypto;
 
 create type public.app_role as enum ('customer','staff','admin','super_admin');
-create type public.package_category as enum ('domestic','maharashtra','international','trek','expedition','weekend','villa','custom');
+create type public.package_category as enum ('domestic','maharashtra','international','strangers_meetup','trek','expedition','weekend','villa','custom');
 create type public.booking_status as enum ('draft','pending_payment','confirmed','cancelled','completed');
 create type public.payment_status as enum ('pending','processing','success','failed','refunded');
 create type public.lead_status as enum ('new','contacted','follow_up','qualified','converted','closed_lost');

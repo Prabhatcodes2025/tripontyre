@@ -74,6 +74,7 @@ const fallbackContent: PublicContent = {
 
 const ContentContext = createContext<PublicContent>(fallbackContent);
 const text = (value: unknown) => typeof value === 'string' ? value : '';
+const stringList = (value: unknown) => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())) : [];
 
 export function PublicContentProvider({ children }: { children: ReactNode }) {
   const [content, setContent] = useState(fallbackContent);
@@ -85,7 +86,7 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
     void (async () => {
       const [destinationResult, packageResult, galleryResult, heroResult, serviceResult, blogResult, eventResult, faqResult, testimonialResult, awardResult] = await Promise.all([
         supabase.from('destinations').select('slug,name,region,country,state,summary,hero_image,primary_category').eq('published', true).order('featured', { ascending:false }).order('name'),
-        supabase.from('tour_packages').select('slug,title,category,is_upcoming,duration_days,duration_nights,summary,description,hero_image,trip_style,base_price,destinations(name,country,state),tour_itinerary_days(day_number,location),package_images(storage_path,display_order,is_cover)').eq('published', true).order('featured', { ascending:false }).order('created_at'),
+        supabase.from('tour_packages').select('slug,title,category,is_upcoming,duration_days,duration_nights,summary,description,hero_image,trip_style,base_price,child_price,infant_price,age_pricing,advance_type,advance_value,inclusions,exclusions,important_information,booking_enabled,destinations(name,country,state),tour_itinerary_days(day_number,title,description,location),package_images(storage_path,display_order,is_cover)').eq('published', true).order('featured', { ascending:false }).order('created_at'),
         supabase.from('gallery_items').select('media_url,title,alt_text').eq('published', true).eq('media_type', 'image').order('display_order'),
         supabase.from('hero_slides').select('title,subtitle,image_url,alt_text,destinations(name,region,country,state)').eq('published', true).order('display_order'),
         supabase.from('travel_services').select('name,description').eq('published', true).order('name'),
@@ -100,8 +101,8 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
       const liveDestinations = (destinationResult.data || []).map(row => ({
         name: text(row.name),
         slug: text(row.slug),
-        category: (['domestic','international','strangers_meetup'].includes(text(row.primary_category)) ? text(row.primary_category) : 'domestic') as PackageCategory,
-        label: categoryLabels[(['domestic','international','strangers_meetup'].includes(text(row.primary_category)) ? text(row.primary_category) : 'domestic') as PackageCategory],
+        category: (['domestic','international','strangers_meetup','custom'].includes(text(row.primary_category)) ? text(row.primary_category) : 'domestic') as PackageCategory,
+        label: categoryLabels[(['domestic','international','strangers_meetup','custom'].includes(text(row.primary_category)) ? text(row.primary_category) : 'domestic') as PackageCategory],
         image: text(row.hero_image) || photos.hero,
       })).filter(item => item.name && item.slug);
 
@@ -111,8 +112,8 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         const route = itinerary.map(day => text(day.location)).filter((value, index, all) => value && value !== all[index - 1]).join(' → ');
         const days = Number(row.duration_days) || 0;
         const nights = Number(row.duration_nights);
-        const category = (['domestic','international','strangers_meetup'].includes(text(row.category)) ? text(row.category) : 'domestic') as PackageCategory;
-        const detailsAvailable = Boolean(days || itinerary.length || row.base_price || text(row.description));
+        const category = (['domestic','international','strangers_meetup','custom'].includes(text(row.category)) ? text(row.category) : 'domestic') as PackageCategory;
+        const detailsAvailable = Boolean(days && itinerary.length);
         const packageImages = [...(row.package_images || [])]
           .sort((a, b) => Number(Boolean(b.is_cover)) - Number(Boolean(a.is_cover)) || Number(a.display_order) - Number(b.display_order))
           .map(item => text(item.storage_path))
@@ -132,13 +133,24 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
           category,
           upcoming: Boolean(row.is_upcoming),
           detailsAvailable,
+          basePrice: Number.isFinite(Number(row.base_price)) ? Number(row.base_price) : undefined,
+          childPrice: Number.isFinite(Number(row.child_price)) ? Number(row.child_price) : undefined,
+          infantPrice: Number.isFinite(Number(row.infant_price)) ? Number(row.infant_price) : undefined,
+          advanceType: row.advance_type === 'fixed' ? 'fixed' as const : 'percentage' as const,
+          advanceValue: Number.isFinite(Number(row.advance_value)) ? Number(row.advance_value) : undefined,
+          itinerary: itinerary.map(day => ({ day:Number(day.day_number), title:text(day.title), description:text(day.description), location:text(day.location) })),
+          inclusions: stringList(row.inclusions),
+          exclusions: stringList(row.exclusions),
+          importantInformation: text(row.important_information),
+          bookable: Boolean(row.booking_enabled && row.base_price && itinerary.length),
+          agePricing: Array.isArray(row.age_pricing) ? row.age_pricing.map(item => ({ label:text((item as Record<string,unknown>).label), price:Number((item as Record<string,unknown>).price) })).filter(item => item.label && Number.isFinite(item.price)) : [],
         };
       }).filter(item => item.title && item.slug);
 
       const liveGallery = (galleryResult.data || []).map(row => ({
         src: text(row.media_url),
-        title: text(row.title) || 'My Tripon travel moment',
-        alt: text(row.alt_text) || text(row.title) || 'My Tripon travel photograph',
+        title: /agumbe/i.test(text(row.title)) && /tulip/i.test(text(row.media_url)) ? 'Tulip Garden' : text(row.title) || 'My Tripon travel moment',
+        alt: /agumbe/i.test(text(row.alt_text)) && /tulip/i.test(text(row.media_url)) ? 'Rows of colourful tulips at Tulip Garden in Kashmir' : text(row.alt_text) || text(row.title) || 'My Tripon travel photograph',
       })).filter(item => Boolean(item.src));
       const liveHeroes = (heroResult.data || []).map(row => {
         const destination = Array.isArray(row.destinations) ? row.destinations[0] : row.destinations;
@@ -153,8 +165,8 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
       }).filter(item => item.title && item.image);
 
       setContent({
-        destinations: liveDestinations.length ? liveDestinations : fallbackContent.destinations,
-        packages: livePackages.length ? livePackages : fallbackContent.packages,
+        destinations: liveDestinations.length ? [...liveDestinations, ...fallbackContent.destinations.filter(item => item.category === 'custom' && !liveDestinations.some(live => live.slug === item.slug))] : fallbackContent.destinations,
+        packages: livePackages.length ? [...livePackages, ...fallbackContent.packages.filter(item => item.category === 'custom' && !livePackages.some(live => live.slug === item.slug))] : fallbackContent.packages,
         gallery: liveGallery.length ? liveGallery : fallbackContent.gallery,
         heroSlides: liveHeroes.length ? liveHeroes : fallbackContent.heroSlides,
         services: serviceResult.data?.length ? serviceResult.data.map(row => ({ title:text(row.name), copy:text(row.description) })) : fallbackContent.services,

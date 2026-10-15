@@ -21,7 +21,7 @@ const clientMontage = [
   { name:'Nusa Penida', region:'BALI · ISLAND COAST', image:photos.clientNusa, note:'Clifftop paths, bright water and a natural arch by the sea.', focal:'center 58%' },
   { name:'Beach reflections', region:'COASTAL MOMENTS', image:photos.clientBeach, note:'A wide shoreline, soft light and room to wander.', focal:'center 54%' },
   { name:'Mountain crossing', region:'NORTH INDIA · OPEN ROAD', image:photos.clientBridge, note:'River stones, mountain air and a road worth taking slowly.', focal:'center 58%' },
-  { name:'Tulip Gardens, Kashmir', region:'SRINAGAR · KASHMIR IN BLOOM', image:photos.clientTulips, note:'Rows of spring colour at Kashmir’s Tulip Gardens.', focal:'center 62%' },
+  { name:'Tulip Garden', region:'SRINAGAR · KASHMIR IN BLOOM', image:photos.clientTulips, note:'Rows of spring colour at Kashmir’s Tulip Garden.', focal:'center 62%' },
   { name:'A street of your own', region:'WANDER AT YOUR OWN PACE', image:photos.traveller, note:'A backpack, a quiet street and time to follow your curiosity.', focal:'center 53%' },
   { name:'Wild horizons', region:'NATURE · OPEN SPACES', image:photos.tree, note:'A beautiful tree, warm evening light and room to breathe.', focal:'center 56%' },
 ];

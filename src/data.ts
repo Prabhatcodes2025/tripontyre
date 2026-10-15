@@ -25,7 +25,7 @@ export const photos = {
   clientTulips: '/travel/tulip-garden.webp',
 };
 
-export type PackageCategory = 'domestic' | 'international' | 'strangers_meetup';
+export type PackageCategory = 'domestic' | 'international' | 'strangers_meetup' | 'custom';
 
 const catalogue: Record<PackageCategory, string[]> = {
   domestic: [
@@ -41,12 +41,14 @@ const catalogue: Record<PackageCategory, string[]> = {
   ],
   international: ['Dubai', 'Thailand', 'Indonesia', 'Bali - Nusa Penida', 'Malaysia - Singapore', 'Sri Lanka', 'Maldives', 'Nepal', 'Bhutan', 'Azerbaijan'],
   strangers_meetup: ['Matheran', 'Vagamon', 'Hampi', 'Gokarna', 'Agumbe', 'Jog Falls', 'Wayanad', 'Kasol', 'Chikmagalur'],
+  custom: ['Customized Tour'],
 };
 
 export const categoryLabels: Record<PackageCategory, string> = {
-  domestic: 'Domestic Tour Packages',
+  domestic: 'Domestic Tour',
   international: 'International Tours',
-  strangers_meetup: 'Strangers Meetup Tours',
+  strangers_meetup: 'Strangers Camp',
+  custom: 'Customized Tour',
 };
 
 const upcomingNames = new Set(['Thailand', 'Rajasthan', 'Delhi - Agra - Jaipur - Amritsar - Wagah Border']);
@@ -61,6 +63,7 @@ const imageFor = (name: string, category: PackageCategory) => {
   if (lower.includes('rajasthan')) return photos.rajasthan;
   if (lower.includes('kerala') || lower.includes('munnar') || lower.includes('vagamon') || lower.includes('wayanad') || lower.includes('athirappalli')) return photos.kerala;
   if (lower.includes('thailand')) return photos.thailand;
+  if (category === 'custom') return photos.traveller;
   return category === 'international' ? photos.traveller : photos.tree;
 };
 
@@ -68,6 +71,10 @@ export type Destination = { name: string; label: string; slug: string; image: st
 export type TourPackage = {
   title: string; place: string; duration: string; style: string; image: string; slug: string;
   route: string; desc: string; category: PackageCategory; upcoming: boolean; detailsAvailable: boolean; gallery?: string[];
+  basePrice?: number; childPrice?: number; infantPrice?: number; advanceValue?: number; advanceType?: 'fixed' | 'percentage';
+  itinerary?: { day: number; title: string; description: string; location: string }[];
+  inclusions?: string[]; exclusions?: string[]; importantInformation?: string; bookable?: boolean;
+  agePricing?: { label: string; price: number }[];
 };
 
 export const destinations: Destination[] = (Object.entries(catalogue) as [PackageCategory, string[]][]).flatMap(([category, names]) =>
@@ -86,6 +93,7 @@ export const packages: TourPackage[] = destinations.map(destination => ({
   category: destination.category,
   upcoming: upcomingNames.has(destination.name),
   detailsAvailable: false,
+  bookable: false,
 }));
 
 export const catalogueCounts = Object.fromEntries(Object.entries(catalogue).map(([key, values]) => [key, values.length])) as Record<PackageCategory, number>;
@@ -95,7 +103,7 @@ export const gallery:GalleryPhoto[] = [
   {src:photos.clientNusa,title:'Nusa Penida coast',alt:'Natural rock arch and blue water at Nusa Penida, Bali'},
   {src:photos.clientBeach,title:'Coastal reflections',alt:'Travellers walking across a reflective beach at low tide'},
   {src:photos.clientBridge,title:'Mountain river crossing',alt:'Bridge over a rocky mountain river in North India'},
-  {src:photos.clientTulips,title:'Tulip Gardens, Kashmir',alt:'Rows of red, white and pink tulips at Tulip Gardens in Kashmir'},
+  {src:photos.clientTulips,title:'Tulip Garden',alt:'Rows of red, white and pink tulips at Tulip Garden in Kashmir'},
   {src:photos.couple,title:'Plan for Two',alt:'Two flower-decorated chairs prepared for a romantic experience'},
   {src:photos.traveller,title:'A street of your own',alt:'A woman with a backpack walking through a historic street'},
   {src:photos.tree,title:'Wild horizons',alt:'A beautiful spreading tree silhouetted against a warm sunset'},

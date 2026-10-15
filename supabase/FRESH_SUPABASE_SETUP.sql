@@ -6,7 +6,7 @@ begin;
 create extension if not exists pgcrypto;
 
 create type public.app_role as enum ('customer','staff','admin','super_admin');
-create type public.package_category as enum ('domestic','maharashtra','international','trek','expedition','weekend','villa','custom');
+create type public.package_category as enum ('domestic','international','strangers_meetup','custom');
 create type public.booking_status as enum ('draft','pending_payment','confirmed','cancelled','completed');
 create type public.payment_status as enum ('pending','processing','success','failed','refunded');
 create type public.lead_status as enum ('new','contacted','follow_up','qualified','converted','closed_lost');
@@ -39,6 +39,7 @@ create table public.tour_packages (
   hero_image text, trip_style text, highlights jsonb not null default '[]'::jsonb,
   inclusions jsonb not null default '[]'::jsonb, exclusions jsonb not null default '[]'::jsonb,
   important_information text, base_price integer check(base_price is null or base_price >= 0),
+  age_pricing jsonb not null default '[]'::jsonb, booking_enabled boolean not null default false,
   child_price integer check(child_price is null or child_price >= 0), infant_price integer check(infant_price is null or infant_price >= 0),
   tax_rate numeric(5,2) not null default 0 check(tax_rate between 0 and 100),
   advance_type text not null default 'percentage' check(advance_type in ('percentage','fixed')),

@@ -163,11 +163,11 @@ values (
   'company_contact',
   jsonb_build_object(
     'public', true,
-    'legalName', 'My Tripon Travel Pvt. Ltd.',
-    'corporateOffice', jsonb_build_object('address','Mahipalpur, Delhi - 110037','phone','7592999111'),
-    'kozhikodeOffice', jsonb_build_object('address','Sky Tower, Major Road Junction, Kozhikode','phone','7592883311'),
-    'additionalOffices', jsonb_build_array('Bengaluru','Hyderabad','Mumbai'),
-    'email', 'infomytripontravel@gmail.com'
+    'legalName', 'My Tripon Travel Pvt Ltd',
+    'corporateOffice', jsonb_build_object('address','Mahipalpur, Delhi - 110037','phone','7582999111'),
+    'kozhikodeOffice', jsonb_build_object('address','7th Floor, Sky Towers, Mavoor Road Junction, Kozhikode.','phone','7592883311'),
+    'email', 'mytripontravel@gmail.com',
+    'website', 'www.mytripontravel.com'
   )
 )
 on conflict(key) do update set value=excluded.value,updated_at=now();
