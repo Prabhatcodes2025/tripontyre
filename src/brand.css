@@ -1,0 +1,338 @@
+/*
+ * Canonical brand lock-up.
+ *
+ * The source artwork has a 20:9 aspect ratio and must keep its natural height.
+ * These rules intentionally load after the legacy stylesheets so old single-image
+ * crop rules cannot reintroduce negative margins, clipping or fixed-height overlap.
+ */
+.official-brand[data-brand-lockup] {
+  --brand-mark-width: 56px;
+  --brand-wordmark-width: 136px;
+  --brand-column-gap: 10px;
+  --brand-row-gap: 5px;
+  --brand-legal-size: 11px;
+  display: inline-grid;
+  grid-template-columns: var(--brand-mark-width) minmax(0, var(--brand-wordmark-width));
+  align-items: center;
+  column-gap: var(--brand-column-gap);
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  overflow: visible;
+  line-height: 1;
+  transform: none;
+}
+
+[data-brand-lockup] > .official-brand__mark,
+[data-brand-lockup] .official-brand__wordmark {
+  display: block;
+  min-width: 0;
+  height: auto;
+  overflow: visible;
+  transform: none;
+}
+
+[data-brand-lockup] > .official-brand__mark {
+  width: var(--brand-mark-width);
+}
+
+[data-brand-lockup] .official-brand__wordmark {
+  width: var(--brand-wordmark-width);
+}
+
+[data-brand-lockup] > .official-brand__mark > img,
+[data-brand-lockup] .official-brand__wordmark > img {
+  position: static;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  object-fit: contain;
+  object-position: center;
+  mix-blend-mode: normal;
+  transform: none;
+}
+
+[data-brand-lockup] > .official-brand__identity {
+  display: grid;
+  grid-template-rows: auto auto;
+  align-items: start;
+  row-gap: var(--brand-row-gap);
+  min-width: 0;
+  width: var(--brand-wordmark-width);
+  height: auto;
+  overflow: visible;
+}
+
+[data-brand-lockup] .official-brand__legal {
+  display: block;
+  margin: 0;
+  color: var(--ink);
+  font: 700 var(--brand-legal-size)/1.25 var(--sans);
+  letter-spacing: .025em;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.official-brand--compact {
+  grid-template-columns: var(--brand-mark-width);
+}
+
+/* Public sticky header: natural height prevents the wordmark row being cropped. */
+.header {
+  min-height: 92px;
+  height: auto;
+  padding-block: 7px;
+}
+
+.header .brand {
+  display: flex;
+  align-items: center;
+  width: auto;
+  max-width: 210px;
+  min-width: 0;
+  height: auto;
+  overflow: visible;
+  flex: 0 1 auto;
+}
+
+.header.scrolled .brand,
+.header.scrolled .official-brand {
+  height: auto;
+}
+
+/* Dark brand surfaces retain the full official artwork and readable legal name. */
+.footer-brand > .official-brand,
+.auth-image > .official-brand,
+.account-mark > .official-brand,
+.admin-brand > .official-brand {
+  --brand-mark-width: 44px;
+  --brand-wordmark-width: 118px;
+  --brand-legal-size: 10px;
+  filter: drop-shadow(0 2px 8px #0005);
+}
+
+.footer-brand .official-brand__wordmark img,
+.auth-image .official-brand__wordmark img,
+.account-mark .official-brand__wordmark img,
+.admin-brand .official-brand__wordmark img,
+.hero-brand-logo .official-brand__wordmark img {
+  filter: brightness(0) invert(1);
+}
+
+.footer-brand .official-brand__legal,
+.auth-image .official-brand__legal,
+.account-mark .official-brand__legal,
+.admin-brand .official-brand__legal,
+.hero-brand-logo .official-brand__legal {
+  color: #f3f5ef;
+}
+
+.footer-brand > .official-brand {
+  --brand-mark-width: 52px;
+  --brand-wordmark-width: 142px;
+  --brand-legal-size: 11px;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.auth-panel > .official-brand {
+  --brand-mark-width: 50px;
+  --brand-wordmark-width: 130px;
+  --brand-legal-size: 11px;
+  margin-bottom: 24px;
+}
+
+.auth-image > .official-brand {
+  display: inline-grid;
+  margin: 0 0 auto;
+}
+
+.account-mark,
+.admin-brand {
+  min-width: 0;
+  height: auto;
+}
+
+.account-mark > .official-brand,
+.admin-brand > .official-brand {
+  flex: 0 1 auto;
+}
+
+.admin-brand > button {
+  flex: none;
+}
+
+/* The cinematic home signature uses the same flow, only at a larger scale. */
+.hero-brand-logo {
+  --brand-mark-width: clamp(66px, 8vw, 108px);
+  --brand-wordmark-width: clamp(210px, 28vw, 430px);
+  --brand-column-gap: clamp(10px, 1.2vw, 18px);
+  --brand-row-gap: clamp(5px, .6vw, 9px);
+  --brand-legal-size: clamp(10px, 1vw, 14px);
+  filter: drop-shadow(0 5px 18px #03151d) drop-shadow(0 1px 2px #fff8);
+}
+
+.montage-copy .montage-signature {
+  min-height: clamp(130px, 16vw, 225px);
+}
+
+@media (max-width: 1100px) {
+  .official-brand[data-brand-lockup] {
+    --brand-mark-width: 45px;
+    --brand-wordmark-width: 117px;
+    --brand-column-gap: 8px;
+    --brand-row-gap: 4px;
+    --brand-legal-size: 9.5px;
+  }
+
+  .header {
+    min-height: 84px;
+  }
+
+  .header .brand {
+    max-width: 172px;
+  }
+}
+
+/* Header interaction already treats <=900px as mobile; CSS now matches it. */
+@media (max-width: 900px) {
+  html {
+    scroll-padding-top: 82px;
+  }
+
+  .header {
+    min-height: 82px;
+    padding: 6px 5%;
+  }
+
+  .header .brand {
+    max-width: 172px;
+  }
+
+  .menu-button {
+    display: grid;
+    place-items: center;
+    z-index: 3;
+    width: 42px;
+    height: 42px;
+  }
+
+  .nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: calc(100svh - 82px);
+    overflow: auto;
+    background: var(--ivory);
+    padding: 14px 6% 24px;
+    box-shadow: 0 16px 22px #102f3924;
+    align-items: stretch;
+    gap: 0;
+    flex-direction: column;
+  }
+
+  .nav.open {
+    display: flex;
+  }
+
+  .nav > a:not(.nav-cta),
+  .nav-dropdown > a {
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+
+  .nav-dropdown {
+    display: block;
+    height: auto;
+  }
+
+  .nav-dropdown > a {
+    justify-content: space-between;
+  }
+
+  .mega-menu {
+    position: static;
+    display: none;
+    width: auto;
+    padding: 13px 0;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    box-shadow: none;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  .nav-dropdown.dest-open .mega-menu,
+  .nav-dropdown:focus-within .mega-menu {
+    display: grid;
+  }
+
+  .mega-feature {
+    display: none;
+  }
+
+  .nav-cta {
+    align-self: flex-start;
+    margin-top: 13px;
+  }
+
+  .detail-nav {
+    top: 82px;
+  }
+}
+
+@media (max-width: 480px) {
+  .official-brand[data-brand-lockup] {
+    --brand-mark-width: 43px;
+    --brand-wordmark-width: 112px;
+    --brand-column-gap: 7px;
+    --brand-row-gap: 4px;
+    --brand-legal-size: 9.5px;
+  }
+
+  .header {
+    min-height: 80px;
+  }
+
+  .nav {
+    max-height: calc(100svh - 80px);
+  }
+
+  .detail-nav {
+    top: 80px;
+  }
+
+  .footer-brand > .official-brand,
+  .auth-panel > .official-brand,
+  .auth-image > .official-brand {
+    --brand-mark-width: 46px;
+    --brand-wordmark-width: 124px;
+    --brand-legal-size: 10px;
+  }
+
+  .account-mark > .official-brand,
+  .admin-brand > .official-brand {
+    --brand-mark-width: 40px;
+    --brand-wordmark-width: 108px;
+    --brand-legal-size: 9px;
+  }
+
+  .hero-brand-logo {
+    --brand-mark-width: 56px;
+    --brand-wordmark-width: min(250px, 62vw);
+    --brand-legal-size: 10px;
+  }
+
+  .montage-copy .montage-signature {
+    min-height: 138px;
+  }
+}

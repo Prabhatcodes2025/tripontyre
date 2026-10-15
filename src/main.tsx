@@ -6,5 +6,6 @@ import { PublicContentProvider } from './services/content';
 import './styles.css';
 import './premium.css';
 import './production.css';
+import './brand.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><BrowserRouter><PublicContentProvider><App /></PublicContentProvider></BrowserRouter></React.StrictMode>);
