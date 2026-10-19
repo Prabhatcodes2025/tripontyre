@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ComponentType } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, Pause, Play } from 'lucide-react';
-import { photos } from './data';
+import { formatPackagePrice, photos } from './data';
 import { usePublicContent } from './services/content';
 import BrandLogo from './components/BrandLogo';
 import { company } from './company';
@@ -130,7 +130,7 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
 
     <section className="journeys-section section-pad">
       <div className="world-heading journeys-heading"><div><span className="section-overline">HANDPICKED JOURNEYS</span><h2>Thoughtfully planned.<br/><em>Beautifully experienced.</em></h2></div><div><p>Good routes give a trip its shape — and leave enough space for the moments you didn’t plan.</p><Link to="/packages" className="line-link">View all journeys <ArrowRight size={15}/></Link></div></div>
-      <div className="journey-mosaic">{featuredPackages.map((item,index)=><Link to={`/packages/${item.slug}`} className={`journey-feature journey-${index+1}`} key={item.slug}><img src={item.image} alt={`${item.place} journey`} loading="lazy"/><span className="journey-number">0{index+1} / JOURNEY</span><div className="journey-detail"><div><small>{item.place.toUpperCase()} <i>·</i> {item.duration.toUpperCase()}</small><h3>{item.title}</h3><p>{item.route}</p></div><span className="journey-arrow"><ArrowUpRight/></span></div></Link>)}</div>
+      <div className="journey-mosaic">{featuredPackages.map((item,index)=><Link to={`/packages/${item.slug}`} className={`journey-feature journey-${index+1}`} key={item.slug}><img src={item.image} alt={`${item.place} journey`} loading="lazy"/><span className="journey-number">0{index+1} / JOURNEY</span><div className="journey-detail"><div><small>{item.place.toUpperCase()} <i>·</i> {item.duration.toUpperCase()}</small><h3>{item.title}</h3><strong className="journey-price">{formatPackagePrice(item.basePrice)}</strong><p>{item.route}</p></div><span className="journey-arrow"><ArrowUpRight/></span></div></Link>)}</div>
     </section>
 
     <section className="trending-strip"><div><span className="section-overline">A PLACE ON YOUR MIND?</span><b>Trending now</b></div>{[['Kashmir',photos.kashmir,'Hills'],['Bali',photos.bali,'Island life'],['Dubai',photos.dubai,'City & desert'],['Kerala',photos.kerala,'Backwaters'],['Thailand',photos.thailand,'Culture']].map(([name,image,label])=><Link to={`/destinations/${String(name).toLowerCase()}`} key={name}><img src={image} alt="" loading="lazy"/><span><small>{label}</small><b>{name}</b></span><ArrowUpRight size={14}/></Link>)}</section>

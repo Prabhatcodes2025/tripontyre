@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises';
 const path = 'supabase/migrations/202610150002_full_tour_content.sql';
 const sql = await readFile(path, 'utf8');
 const metadata = sql.slice(sql.indexOf('update public.tour_packages'), sql.indexOf('-- Exact organized day-wise'));
-const itinerary = sql.slice(sql.indexOf('insert into public.tour_itinerary_days'));
+const itinerary = sql.slice(sql.indexOf('insert into pg_temp.client_tour_itinerary'));
+const bookingSafetySql = await readFile('supabase/migrations/202610180001_booking_enabled_enforcement.sql', 'utf8');
 
 const specs = [
   { slug:'kashmir-kargil', days:5, stops:8, inclusions:9, exclusions:7, bands:4, price:2100000, required:['10:00 AM — Pickup from Srinagar Airport.','5:00 PM — Zero Point','2:00 PM — Gulmarg Gondola','Optional client-supplied train-return sequence'] },
@@ -42,6 +43,11 @@ for (const spec of specs) {
 for (const required of ['booking_enabled=false','published=false','published_at=null','begin;','commit;']) {
   if (!sql.includes(required)) failures.push(`migration safety marker missing: ${required}`);
 }
+for (const required of ['Existing itinerary content differs','indisunique','create unique index tour_itinerary_days_package_day_uidx']) {
+  if (!sql.includes(required)) failures.push(`migration conflict/constraint guard missing: ${required}`);
+}
+if (/hero_image\s*=/.test(metadata)) failures.push('migration must preserve existing package hero images');
+if (!bookingSafetySql.includes('published=true and booking_enabled=true')) failures.push('server booking path does not enforce booking_enabled');
 
 const publicFiles = await Promise.all(['index.html','src/company.ts','supabase/SEED_PUBLIC_CONTENT.sql'].map(file => readFile(file,'utf8')));
 const publicText = publicFiles.join('\n');

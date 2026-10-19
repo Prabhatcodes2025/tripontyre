@@ -23,6 +23,10 @@ export const photos = {
   clientBeach: '/travel/beach-reflections.webp',
   clientBridge: '/travel/mountain-river-bridge.webp',
   clientTulips: '/travel/tulip-garden.webp',
+  // Verified destination photographs; source pages are documented in the CR7 migration.
+  agumbe: 'https://images.unsplash.com/photo-1578378377576-2ed7065bdb87?auto=format&fit=crop&w=1600&q=85',
+  ajanta: 'https://images.unsplash.com/photo-1620558601903-9f2441730121?auto=format&fit=crop&w=1600&q=85',
+  andaman: 'https://images.unsplash.com/photo-1767782843278-1cfc4acff2ff?auto=format&fit=crop&w=1600&q=85',
 };
 
 export type PackageCategory = 'domestic' | 'international' | 'strangers_meetup' | 'custom';
@@ -58,7 +62,10 @@ const imageFor = (name: string, category: PackageCategory) => {
   if (lower === 'kashmir') return photos.clientTulips;
   if (lower.includes('kashmir') || lower.includes('ladakh') || lower.includes('manali') || lower.includes('kasol')) return photos.clientBridge;
   if (lower.includes('bali') || lower.includes('indonesia')) return photos.clientNusa;
-  if (lower.includes('goa') || lower.includes('gokarna') || lower.includes('andaman') || lower.includes('lakshadweep') || lower.includes('maldives')) return photos.clientBeach;
+  if (lower === 'agumbe') return photos.agumbe;
+  if (lower.includes('ajanta') || lower.includes('ellora')) return photos.ajanta;
+  if (lower === 'andaman') return photos.andaman;
+  if (lower.includes('goa') || lower.includes('gokarna') || lower.includes('lakshadweep') || lower.includes('maldives')) return photos.clientBeach;
   if (lower.includes('dubai')) return photos.clientDesert;
   if (lower.includes('rajasthan')) return photos.rajasthan;
   if (lower.includes('kerala') || lower.includes('munnar') || lower.includes('vagamon') || lower.includes('wayanad') || lower.includes('athirappalli')) return photos.kerala;
@@ -97,6 +104,9 @@ export const packages: TourPackage[] = destinations.map(destination => ({
 }));
 
 export const catalogueCounts = Object.fromEntries(Object.entries(catalogue).map(([key, values]) => [key, values.length])) as Record<PackageCategory, number>;
+export const formatPackagePrice = (price?: number) => price && price > 0
+  ? `From ₹${(price / 100).toLocaleString('en-IN')}`
+  : 'Enquire for price';
 export type GalleryPhoto = { src:string; title:string; alt:string };
 export const gallery:GalleryPhoto[] = [
   {src:photos.clientDesert,title:'Dubai desert adventure',alt:'My Tripon travellers beside their desert convoy in Dubai'},

@@ -103,6 +103,16 @@
   height: auto;
 }
 
+.header .official-brand {
+  transition: grid-template-columns .2s ease, column-gap .2s ease;
+}
+
+.header.scrolled .official-brand {
+  --brand-mark-width: 60px;
+  --brand-wordmark-width: 136px;
+  --brand-column-gap: 10px;
+}
+
 /* Dark brand surfaces retain the full official artwork and readable legal name. */
 .footer-brand > .official-brand,
 .auth-image > .official-brand,
@@ -195,6 +205,12 @@
   .header .brand {
     max-width: 172px;
   }
+
+  .header.scrolled .official-brand {
+    --brand-mark-width: 47px;
+    --brand-wordmark-width: 117px;
+    --brand-column-gap: 8px;
+  }
 }
 
 /* Header interaction already treats <=900px as mobile; CSS now matches it. */
@@ -210,6 +226,12 @@
 
   .header .brand {
     max-width: 172px;
+  }
+
+  .header.scrolled .official-brand {
+    --brand-mark-width: 47px;
+    --brand-wordmark-width: 117px;
+    --brand-column-gap: 8px;
   }
 
   .menu-button {
@@ -301,6 +323,12 @@
 
   .header {
     min-height: 80px;
+  }
+
+  .header.scrolled .official-brand {
+    --brand-mark-width: 46px;
+    --brand-wordmark-width: 112px;
+    --brand-column-gap: 7px;
   }
 
   .nav {

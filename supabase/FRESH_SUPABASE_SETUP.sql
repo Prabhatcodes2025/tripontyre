@@ -412,7 +412,7 @@ begin
   end if;
 
   select * into v_package from public.tour_packages
-  where slug=p_package_slug and published=true for share;
+  where slug=p_package_slug and published=true and booking_enabled=true for share;
   if not found or v_package.base_price is null then raise exception 'package_unavailable'; end if;
 
   select * into v_availability from public.package_availability

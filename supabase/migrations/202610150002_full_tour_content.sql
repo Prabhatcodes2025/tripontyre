@@ -9,6 +9,7 @@ do $$
 declare
   missing_slugs text;
   unexpected_days text;
+  duplicate_days text;
 begin
   select string_agg(required.slug, ', ' order by required.slug)
   into missing_slugs
@@ -36,10 +37,46 @@ begin
     ('delhi-agra-tour',3),
     ('delhi-agra-jaipur-amritsar-wagah-border',8)
   ) expected(slug,max_day) on expected.slug=p.slug
-  where d.day_number>expected.max_day;
+  where d.day_number<1 or d.day_number>expected.max_day;
 
   if unexpected_days is not null then
     raise exception 'Unexpected existing itinerary rows require manual review; no rows were deleted: %', unexpected_days;
+  end if;
+
+  select string_agg(p.slug || ': day ' || duplicates.day_number::text || ' (' || duplicates.row_count::text || ' rows)', ', ' order by p.slug,duplicates.day_number)
+  into duplicate_days
+  from (
+    select package_id,day_number,count(*) as row_count
+    from public.tour_itinerary_days
+    group by package_id,day_number
+    having count(*)>1
+  ) duplicates
+  join public.tour_packages p on p.id=duplicates.package_id;
+
+  if duplicate_days is not null then
+    raise exception 'Duplicate itinerary rows must be reviewed before adding the package/day uniqueness guard: %', duplicate_days;
+  end if;
+end $$;
+
+-- ON CONFLICT(package_id,day_number) requires a compatible unique index. The
+-- canonical schema already has one; this drift-safe guard adds it only when no
+-- equivalent unique index exists, after the duplicate preflight above.
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_index i
+    where i.indrelid='public.tour_itinerary_days'::regclass
+      and i.indisunique
+      and i.indpred is null
+      and i.indexprs is null
+      and (
+        select array_agg(a.attname order by key_column.ordinality)
+        from unnest(i.indkey::smallint[]) with ordinality key_column(attnum,ordinality)
+        join pg_attribute a on a.attrelid=i.indrelid and a.attnum=key_column.attnum
+      )=array['package_id','day_number']::name[]
+  ) then
+    execute 'create unique index tour_itinerary_days_package_day_uidx on public.tour_itinerary_days(package_id,day_number)';
   end if;
 end $$;
 
@@ -52,7 +89,8 @@ set
   duration_nights=source.duration_nights,
   summary=source.summary,
   description=source.description,
-  hero_image=source.hero_image,
+  -- Preserve every existing package image. Missing images remain for Admin to
+  -- supply rather than assigning the same generic Taj Mahal image to tours.
   trip_style='Guided domestic group tour',
   highlights=source.highlights,
   inclusions=source.inclusions,
@@ -76,7 +114,6 @@ from (values
     'Kashmir–Kargil Tour',5,4,
     'A proposed 5-day/4-night route through Srinagar, Sonmarg, Kargil, Pahalgam and Gulmarg, subject to access, weather and final operational confirmation.',
     'Client-supplied proposed itinerary covering Srinagar, Sonmarg, Drass, Kargil LOC and War Memorial, Pahalgam and Gulmarg. Access-controlled places, train arrangements, ticket prices and operating conditions require confirmation before publication.',
-    '/travel/mountain-river-bridge.webp',
     '["Srinagar","Gulmarg","Pahalgam","Sonmarg","Drass","Zero Point","Kargil War Memorial","Kargil LOC"]'::jsonb,
     '["Three-star-category hotels for four nights (client wording: ‘4 days’): one night Kargil and three nights Srinagar; one bedroom/family or twin sharing; breakfast and dinner at hotel.","AC Urbania/bus sightseeing.","Entry tickets including Gondola Phase 1 (client-stated indicative amount approximately ₹1,000/person; current rate not verified).","Breakfast vegetarian, lunch vegetarian, dinner vegetarian and non-vegetarian.","Two mineral-water bottles per day per person.","Local union taxi charges at Pahalgam, Sonmarg and Kargil.","Srinagar airport pickup and drop.","Taxes, tolls and parking.","Malayali tour guide and manager."]'::jsonb,
     '["Flight and train tickets.","Additional expenses not included above.","Gondola Phase 2.","Expenses arising from natural calamities, strikes or bandhs.","Expenses arising from flight cancellation or delay.","Food at airports or on flights.","Transport to or from Delhi airport."]'::jsonb,
@@ -90,7 +127,6 @@ from (values
     'Delhi–Agra–Jaipur Golden Triangle Tour',4,3,
     'A proposed Delhi, Jaipur, Fatehpur Sikri and Agra itinerary supplied as 4 days/3 nights but containing five numbered days.',
     'Client-supplied proposed Golden Triangle schedule. The 4-day/3-night heading conflicts with the complete Day 1–5 itinerary and must be confirmed before publication or booking.',
-    'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1600&q=85',
     '["Delhi","Agra","Fatehpur Sikri","Jaipur"]'::jsonb,
     '["Two mineral-water bottles per day per person.","Taxes, tolls and parking.","Airport or railway pickup and drop."]'::jsonb,
     '["Flights or trains required to reach Delhi.","Anything outside the supplied inclusions.","Unexpected costs arising from strikes, hartals, bandhs or natural calamities.","Personal expenses.","Medical expenses."]'::jsonb,
@@ -104,7 +140,6 @@ from (values
     'Delhi–Agra–Mathura–Jaipur Tour',5,4,
     'A proposed Delhi, Jaipur, Fatehpur Sikri, Agra and Mathura itinerary supplied as 5 days/4 nights but containing six numbered days.',
     'Client-supplied proposed schedule covering Jaipur, Fatehpur Sikri, Taj Mahal, Agra Fort, Mathura, Akshardham and Delhi. Duration requires confirmation.',
-    'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1600&q=85',
     '["Delhi","Agra","Fatehpur Sikri","Mathura","Jaipur"]'::jsonb,
     '["Three-star hotel (client wording: ‘4 days’), twin sharing.","AC pushback Urbania/bus.","All meals.","All entry tickets.","Tour manager and guide.","Two mineral-water bottles per day per person.","Taxes, tolls and parking.","Airport or railway pickup and drop."]'::jsonb,
     '["Flights or trains required to reach Delhi.","Anything outside the supplied inclusions.","Costs arising from strikes, hartals, bandhs or natural calamities.","Personal expenses.","Medical expenses."]'::jsonb,
@@ -118,7 +153,6 @@ from (values
     'Delhi–Agra Tour',3,2,
     'A proposed 3-day/2-night Delhi and Agra tour covering Akshardham, Agra Fort, Taj Mahal and major Delhi landmarks.',
     'Client-supplied proposed three-day schedule for Delhi and Agra. Age-band and operational details require confirmation before booking.',
-    'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1600&q=85',
     '["Delhi","Agra"]'::jsonb,
     '["Three-star hotel (client wording: ‘2 days’), twin sharing.","AC pushback Urbania/bus.","All meals.","All entry tickets.","Tour manager and guide.","Two mineral-water bottles per day per person.","Taxes, tolls and parking.","Airport or railway pickup and drop."]'::jsonb,
     '["Flights or trains required to reach Delhi.","Anything not included above.","Unexpected costs arising from strikes, hartals, bandhs or natural calamities.","Personal expenses.","Medical expenses."]'::jsonb,
@@ -132,7 +166,6 @@ from (values
     'Delhi–Agra–Mathura–Jaipur–Amritsar–Wagah Border Tour',7,6,
     'A proposed Delhi, Jaipur, Agra, Mathura and Amritsar itinerary supplied as 7 days/6 nights but containing eight numbered days.',
     'Client-supplied proposed schedule covering Jaipur, Fatehpur Sikri, Taj Mahal, Mathura, Delhi, Amritsar and the Attari–Wagah Border. Duration and transport schedules require confirmation.',
-    'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1600&q=85',
     '["Delhi","Agra","Jaipur","Fatehpur Sikri","Mathura","Amritsar","Attari–Wagah Border"]'::jsonb,
     '["Three-star hotel (client wording: ‘5 days’), twin sharing.","AC pushback Urbania/bus sightseeing.","Delhi–Amritsar train tickets.","Amritsar–Delhi AC Volvo semi-sleeper tickets.","All meals.","All entry tickets.","Tour manager and guide.","Two mineral-water bottles per day per person.","Taxes, tolls and parking.","Airport or railway pickup and drop."]'::jsonb,
     '["Flights or trains required to reach Delhi.","Anything outside the supplied inclusions.","Costs arising from strikes, hartals, bandhs or natural calamities.","Personal expenses.","Medical expenses."]'::jsonb,
@@ -142,7 +175,7 @@ from (values
     'percentage',0
   )
 ) source(
-  slug,title,duration_days,duration_nights,summary,description,hero_image,
+  slug,title,duration_days,duration_nights,summary,description,
   highlights,inclusions,exclusions,important_information,base_price,age_pricing,
   advance_type,advance_value
 )
@@ -150,9 +183,18 @@ where p.slug=source.slug;
 
 -- Exact organized day-wise schedules. Descriptions retain every supplied time,
 -- stop, conditional arrangement and operational caution without adding inventory.
-insert into public.tour_itinerary_days(package_id,day_number,title,description,location)
-select p.id,source.day_number,source.title,source.description,source.location
-from (values
+drop table if exists pg_temp.client_tour_itinerary;
+create temporary table pg_temp.client_tour_itinerary (
+  slug text not null,
+  day_number integer not null,
+  title text not null,
+  description text,
+  location text,
+  primary key(slug,day_number)
+) on commit preserve rows;
+
+insert into pg_temp.client_tour_itinerary(slug,day_number,title,description,location)
+values
   ('kashmir-kargil',1,'Srinagar → Sonmarg → Kargil',$day$10:00 AM — Pickup from Srinagar Airport.
 10:30 AM — Depart for Sonmarg.
 12:00 noon — River Sindhu.
@@ -403,12 +445,38 @@ Optional client-supplied train-return sequence, not confirmed as included: 2:00 
 10:30 AM — Sarojini Market shopping; approximately three hours.
 1:30 PM — Lunch.
 2:00 PM — Delhi Airport drop, terminal according to flight.$day$,'Delhi')
-) source(slug,day_number,title,description,location)
+;
+
+-- A differing same-day row may be an approved production edit. Abort and list
+-- every conflict instead of silently replacing it. Exact repeat runs pass.
+do $$
+declare
+  conflicting_days text;
+begin
+  select string_agg(p.slug || ': day ' || existing.day_number::text, ', ' order by p.slug,existing.day_number)
+  into conflicting_days
+  from public.tour_itinerary_days existing
+  join public.tour_packages p on p.id=existing.package_id
+  join pg_temp.client_tour_itinerary source on source.slug=p.slug and source.day_number=existing.day_number
+  where existing.title is distinct from source.title
+     or existing.description is distinct from source.description
+     or existing.location is distinct from source.location;
+
+  if conflicting_days is not null then
+    raise exception 'Existing itinerary content differs from the reviewed client source. Export/review these rows before replacement: %', conflicting_days;
+  end if;
+end $$;
+
+insert into public.tour_itinerary_days(package_id,day_number,title,description,location)
+select p.id,source.day_number,source.title,source.description,source.location
+from pg_temp.client_tour_itinerary source
 join public.tour_packages p on p.slug=source.slug
 on conflict(package_id,day_number) do update set
   title=excluded.title,
   description=excluded.description,
   location=excluded.location,
   updated_at=now();
+
+drop table if exists pg_temp.client_tour_itinerary;
 
 commit;

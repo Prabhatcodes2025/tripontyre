@@ -1,9 +1,10 @@
 -- Client change requests 1-6: non-destructive catalogue/contact preparation.
 -- The five packages remain unpublished and non-bookable until the original
 -- itinerary/inclusion/exclusion copy is supplied and reviewed.
+-- Prerequisite: 202610150000_package_category_values.sql commits enum additions
+-- before this migration runs.
 
-alter type public.package_category add value if not exists 'strangers_meetup';
-alter type public.package_category add value if not exists 'custom';
+begin;
 
 alter table public.tour_packages
   add column if not exists age_pricing jsonb not null default '[]'::jsonb,
@@ -48,6 +49,8 @@ on conflict (slug) do update set
   advance_value=excluded.advance_value,
   important_information=coalesce(nullif(public.tour_packages.important_information,''),excluded.important_information),
   booking_enabled=false,
+  published=false,
+  published_at=null,
   updated_at=now();
 
 insert into public.site_settings(key,value)
@@ -68,4 +71,6 @@ set title='Tulip Garden',
 where media_type='image'
   and media_url ilike '%tulip%'
   and (title ilike '%agumbe%' or alt_text ilike '%agumbe%');
+
+commit;
 
