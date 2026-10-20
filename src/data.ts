@@ -1,3 +1,5 @@
+import { destinationImageFor } from './destinationImages';
+
 export const photos = {
   hero: '/dal-lake-kashmir.jpg',
   kerala: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1300&q=85',
@@ -59,6 +61,8 @@ const upcomingNames = new Set(['Thailand', 'Rajasthan', 'Delhi - Agra - Jaipur -
 const slugify = (value: string) => value.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const imageFor = (name: string, category: PackageCategory) => {
   const lower = name.toLowerCase();
+  const verified = destinationImageFor(slugify(name));
+  if (verified) return verified.image;
   if (lower === 'kashmir') return photos.clientTulips;
   if (lower.includes('kashmir') || lower.includes('ladakh') || lower.includes('manali') || lower.includes('kasol')) return photos.clientBridge;
   if (lower.includes('bali') || lower.includes('indonesia')) return photos.clientNusa;

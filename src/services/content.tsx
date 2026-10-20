@@ -75,6 +75,24 @@ const fallbackContent: PublicContent = {
 const ContentContext = createContext<PublicContent>(fallbackContent);
 const text = (value: unknown) => typeof value === 'string' ? value : '';
 const stringList = (value: unknown) => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())) : [];
+const normalizedImageKey = (value: string) => {
+  try {
+    const parsed = new URL(value, 'https://local.invalid');
+    const host = parsed.hostname === 'local.invalid' ? '' : parsed.hostname.toLowerCase();
+    return `${host}${parsed.pathname}`.replace(/\/+$/, '').toLowerCase();
+  } catch {
+    return value.split(/[?#]/, 1)[0].replace(/\/+$/, '').toLowerCase();
+  }
+};
+const uniqueImages = (values: string[]) => {
+  const seen = new Set<string>();
+  return values.filter(value => {
+    const key = normalizedImageKey(value);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
 
 export function PublicContentProvider({ children }: { children: ReactNode }) {
   const [content, setContent] = useState(fallbackContent);
@@ -126,7 +144,7 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
           duration: days ? `${days} day${days === 1 ? '' : 's'}${Number.isFinite(nights) && nights > 0 ? ` · ${nights} night${nights === 1 ? '' : 's'}` : ''}` : 'Details coming soon',
           style: text(row.trip_style) || categoryLabels[category],
           image: primaryImage,
-          gallery: [primaryImage, ...packageImages].filter((value, index, all) => all.indexOf(value) === index),
+          gallery: uniqueImages([primaryImage, ...packageImages]),
           slug: text(row.slug),
           route: route || text(destination?.name) || 'Route confirmed with your trip planner',
           desc: text(row.summary) || text(row.description) || 'Details coming soon. Ask our travel team to register your interest.',
@@ -147,11 +165,17 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         };
       }).filter(item => item.title && item.slug);
 
+      const galleryImageKeys = new Set<string>();
       const liveGallery = (galleryResult.data || []).map(row => ({
         src: text(row.media_url),
         title: /agumbe/i.test(text(row.title)) && /tulip/i.test(text(row.media_url)) ? 'Tulip Garden' : text(row.title) || 'My Tripon travel moment',
         alt: /agumbe/i.test(text(row.alt_text)) && /tulip/i.test(text(row.media_url)) ? 'Rows of colourful tulips at Tulip Garden in Kashmir' : text(row.alt_text) || text(row.title) || 'My Tripon travel photograph',
-      })).filter(item => Boolean(item.src));
+      })).filter(item => {
+        const key = normalizedImageKey(item.src);
+        if (!key || galleryImageKeys.has(key)) return false;
+        galleryImageKeys.add(key);
+        return true;
+      });
       const liveHeroes = (heroResult.data || []).map(row => {
         const destination = Array.isArray(row.destinations) ? row.destinations[0] : row.destinations;
         return {
