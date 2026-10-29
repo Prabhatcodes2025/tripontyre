@@ -20,4 +20,4 @@ For a new project, apply [`supabase/FRESH_SUPABASE_SETUP.sql`](supabase/FRESH_SU
 
 The included `vercel.json` rewrites app routes to the Vite entry point. Update canonical URLs, page metadata, sitemap entries and social metadata for the production domain before launch. Demo destination copy and remote Unsplash photography are in `src/data.ts`; replace them with approved company copy and optimized/licensed media. Supplied logo artwork is in the project root and copied to `public/` for the site.
 
-All displayed testimonial and awards content is labelled as illustrative or placeholder content. No business metrics, awards, ratings or credentials have been fabricated.
+The homepage traveller-film section reads only published video testimonials from Supabase and stays hidden when none exist. Add only genuine, company-approved traveller videos through the role-protected Admin workspace. No customer names, feedback, ratings, awards, business metrics or credentials are fabricated by the application.

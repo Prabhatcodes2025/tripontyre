@@ -15,6 +15,7 @@ export type PublicHeroSlide = {
 export type PublicService = { title: string; copy: string };
 export type PublicContentItem = { title: string; copy: string; slug?: string; image?: string };
 export type PublicTestimonial = { name: string; copy: string; location?: string; image?: string };
+export type PublicVideoTestimonial = { id: string; name?: string; destination?: string; feedback?: string; videoUrl: string; thumbnailUrl?: string };
 export type PublicAward = { title: string; copy: string; issuer?: string; image?: string };
 
 const fallbackHeroSlides: PublicHeroSlide[] = [
@@ -56,6 +57,7 @@ type PublicContent = {
   events: PublicContentItem[];
   faqs: PublicContentItem[];
   testimonials: PublicTestimonial[];
+  videoTestimonials: PublicVideoTestimonial[];
   awards: PublicAward[];
 };
 
@@ -69,6 +71,7 @@ const fallbackContent: PublicContent = {
   events: fallbackEvents,
   faqs: fallbackFaqs,
   testimonials: [],
+  videoTestimonials: [],
   awards: [],
 };
 
@@ -111,7 +114,7 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         supabase.from('blogs').select('slug,title,excerpt,cover_image').eq('published', true).order('published_at', { ascending:false }),
         supabase.from('events').select('slug,title,description,cover_image').eq('published', true).order('starts_at', { ascending:true }),
         supabase.from('faqs').select('question,answer').eq('published', true).order('display_order'),
-        supabase.from('testimonials').select('name,location,quote,media_url').eq('published', true).order('created_at', { ascending:false }),
+        supabase.from('testimonials').select('id,name,location,quote,media_url,media_type,poster_url,display_order').eq('published', true).order('display_order').order('created_at', { ascending:false }),
         supabase.from('awards').select('title,issuer,description,image_url').eq('published', true).order('awarded_on', { ascending:false }),
       ]);
       if (!active) return;
@@ -188,6 +191,19 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         };
       }).filter(item => item.title && item.image);
 
+      const videoRows=(testimonialResult.data || []).filter(row=>row.media_type==='video');
+      const liveVideoTestimonials = (await Promise.all(videoRows.map(async (row):Promise<PublicVideoTestimonial|null> => {
+        const media = text(row.media_url);
+        if (!media) return null;
+        let videoUrl = media;
+        if (!/^https:\/\//i.test(media)) {
+          const signed = await api.storage.from('testimonial-videos').createSignedUrl(media.replace(/^\/+/,''), 3600);
+          if (signed.error || !signed.data?.signedUrl) return null;
+          videoUrl = signed.data.signedUrl;
+        }
+        return { id:text(row.id), name:text(row.name)||undefined, destination:text(row.location)||undefined, feedback:text(row.quote)||undefined, videoUrl, thumbnailUrl:text(row.poster_url)||undefined } satisfies PublicVideoTestimonial;
+      }))).filter((item):item is PublicVideoTestimonial=>Boolean(item?.id&&item.videoUrl));
+
       setContent({
         destinations: liveDestinations.length ? [...liveDestinations, ...fallbackContent.destinations.filter(item => item.category === 'custom' && !liveDestinations.some(live => live.slug === item.slug))] : fallbackContent.destinations,
         packages: livePackages.length ? [...livePackages, ...fallbackContent.packages.filter(item => item.category === 'custom' && !livePackages.some(live => live.slug === item.slug))] : fallbackContent.packages,
@@ -197,7 +213,8 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         blogs: blogResult.data?.length ? blogResult.data.map(row => ({ title:text(row.title), copy:text(row.excerpt), slug:text(row.slug), image:text(row.cover_image) || undefined })) : fallbackContent.blogs,
         events: eventResult.data?.length ? eventResult.data.map(row => ({ title:text(row.title), copy:text(row.description), slug:text(row.slug), image:text(row.cover_image) || undefined })) : fallbackContent.events,
         faqs: faqResult.data?.length ? faqResult.data.map(row => ({ title:text(row.question), copy:text(row.answer) })) : fallbackContent.faqs,
-        testimonials: (testimonialResult.data || []).map(row => ({ name:text(row.name)||'Traveller', location:text(row.location)||undefined, copy:text(row.quote), image:text(row.media_url)||undefined })).filter(item=>item.copy),
+        testimonials: (testimonialResult.data || []).filter(row=>row.media_type!=='video').map(row => ({ name:text(row.name)||'Traveller', location:text(row.location)||undefined, copy:text(row.quote), image:text(row.poster_url)||undefined })).filter(item=>item.copy),
+        videoTestimonials: liveVideoTestimonials,
         awards: (awardResult.data || []).map(row => ({ title:text(row.title), issuer:text(row.issuer)||undefined, copy:text(row.description), image:text(row.image_url)||undefined })).filter(item=>item.title),
       });
     })();

@@ -4,6 +4,7 @@ import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, Pause, Play } from 'lucide
 import { formatPackagePrice, photos } from './data';
 import { usePublicContent } from './services/content';
 import BrandLogo from './components/BrandLogo';
+import VideoTestimonials from './components/VideoTestimonials';
 import { company } from './company';
 
 type FormProps = { compact?: boolean };
@@ -42,7 +43,7 @@ const montageDefaults = [
 ];
 
 export default function HomeExperience({ EnquiryForm }: { EnquiryForm: ComponentType<FormProps> }) {
-  const { destinations, packages, gallery, heroSlides, blogs } = usePublicContent();
+  const { destinations, packages, gallery, heroSlides, blogs, videoTestimonials } = usePublicContent();
   const [slide, setSlide] = useState(0);
   const [activeStyle, setActiveStyle] = useState(0);
   const [destination, setDestination] = useState('');
@@ -113,6 +114,8 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
       <label><span>Travel style</span><select value={style} onChange={event=>setStyle(event.target.value)}><option value="">Show me around</option>{['Family holiday','Couples','Culture & heritage','Adventure','Beach escape'].map(value=><option key={value}>{value}</option>)}</select></label>
       <button className="button teal">Find my holiday <ArrowRight size={16}/></button>
     </form>
+
+    <VideoTestimonials testimonials={videoTestimonials}/>
 
     <section className="welcome-editorial" id="welcome">
       <div className="welcome-copy"><span className="section-overline">EXPLORE <i>•</i> EXPERIENCE <i>•</i> ENJOY</span><h2>We don’t just plan trips.<br/><em>We help shape the stories<br/>you’ll bring home.</em></h2><p>Somewhere new has a way of staying with you. We bring the route, the details and the breathing room together around the holiday you want to have.</p><Link to="/about" className="line-link">Meet My Tripon Travel <ArrowRight size={15}/></Link><span className="welcome-signature">My Tripon Travel <i>·</i> Delhi, India</span></div>

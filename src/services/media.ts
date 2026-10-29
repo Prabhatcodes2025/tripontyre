@@ -2,7 +2,9 @@ import { supabase } from '../lib/supabase';
 import { ConfigurationError } from './platform';
 
 export const SITE_MEDIA_BUCKET = 'site-media';
+export const TESTIMONIAL_VIDEO_BUCKET = 'testimonial-videos';
 export const MAX_MEDIA_FILE_SIZE = 8 * 1024 * 1024;
+export const MAX_TESTIMONIAL_VIDEO_SIZE = 100 * 1024 * 1024;
 
 const ALLOWED_MEDIA_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const EXTENSIONS: Record<string, string> = {
@@ -10,6 +12,8 @@ const EXTENSIONS: Record<string, string> = {
   'image/png': 'png',
   'image/webp': 'webp',
 };
+const ALLOWED_VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
+const VIDEO_EXTENSIONS: Record<string, string> = { 'video/mp4':'mp4', 'video/webm':'webm', 'video/quicktime':'mov' };
 
 export type SiteMediaUpload = {
   path: string;
@@ -49,6 +53,12 @@ export function validateMediaFile(file: File) {
   }
 }
 
+export function validateTestimonialVideo(file: File) {
+  if (!ALLOWED_VIDEO_TYPES.has(file.type)) throw new Error('Choose an MP4, WebM or MOV video.');
+  if (file.size <= 0) throw new Error('The selected video is empty.');
+  if (file.size > MAX_TESTIMONIAL_VIDEO_SIZE) throw new Error('Testimonial videos must be 100 MB or smaller.');
+}
+
 export function getSiteMediaPublicUrl(path: string) {
   const cleanPath = path.replace(/^\/+/, '');
   if (!cleanPath) throw new Error('A Storage path is required.');
@@ -69,6 +79,15 @@ export function siteMediaPathFromUrl(value: string) {
 
 export async function uploadSiteMedia(file: File, options: SiteMediaUploadOptions): Promise<SiteMediaUpload> {
   validateMediaFile(file);
+  return uploadMedia(file, options, SITE_MEDIA_BUCKET, EXTENSIONS[file.type]);
+}
+
+export async function uploadTestimonialVideo(file: File, options: SiteMediaUploadOptions): Promise<SiteMediaUpload> {
+  validateTestimonialVideo(file);
+  return uploadMedia(file, options, TESTIMONIAL_VIDEO_BUCKET, VIDEO_EXTENSIONS[file.type]);
+}
+
+async function uploadMedia(file: File, options: SiteMediaUploadOptions, bucket: string, extension: string): Promise<SiteMediaUpload> {
   const api = requireClient();
   const folder = safeSegment(options.folder);
   if (!folder) throw new Error('A valid media folder is required.');
@@ -79,7 +98,7 @@ export async function uploadSiteMedia(file: File, options: SiteMediaUploadOption
   if (!accessToken) throw new Error('Your session has expired. Sign in and retry the upload.');
 
   const originalName = safeSegment(file.name.replace(/\.[^.]+$/, '')) || 'image';
-  const path = `${folder}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${originalName}.${EXTENSIONS[file.type]}`;
+  const path = `${folder}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${originalName}.${extension}`;
   const encodedPath = path.split('/').map(encodeURIComponent).join('/');
   const projectUrl = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
   const anonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '');
@@ -87,7 +106,7 @@ export async function uploadSiteMedia(file: File, options: SiteMediaUploadOption
 
   await new Promise<void>((resolve, reject) => {
     const request = new XMLHttpRequest();
-    request.open('POST', `${projectUrl}/storage/v1/object/${SITE_MEDIA_BUCKET}/${encodedPath}`);
+    request.open('POST', `${projectUrl}/storage/v1/object/${bucket}/${encodedPath}`);
     request.setRequestHeader('Authorization', `Bearer ${accessToken}`);
     request.setRequestHeader('apikey', anonKey);
     request.setRequestHeader('Content-Type', file.type);
@@ -115,12 +134,28 @@ export async function uploadSiteMedia(file: File, options: SiteMediaUploadOption
     request.send(file);
   });
 
-  return { path, publicUrl: getSiteMediaPublicUrl(path), mimeType: file.type, size: file.size };
+  const publicUrl = bucket === SITE_MEDIA_BUCKET ? getSiteMediaPublicUrl(path) : '';
+  return { path, publicUrl, mimeType: file.type, size: file.size };
 }
 
 export async function removeSiteMedia(pathOrUrl: string) {
   const path = siteMediaPathFromUrl(pathOrUrl) || pathOrUrl.replace(/^\/+/, '');
   if (!path || path.includes('..')) throw new Error('The Storage path is invalid.');
   const { error } = await requireClient().storage.from(SITE_MEDIA_BUCKET).remove([path]);
+  if (error) throw error;
+}
+
+export async function getTestimonialVideoSignedUrl(path: string, expiresIn = 3600) {
+  const cleanPath = path.replace(/^\/+/, '');
+  if (!cleanPath || cleanPath.includes('..')) throw new Error('The video Storage path is invalid.');
+  const { data, error } = await requireClient().storage.from(TESTIMONIAL_VIDEO_BUCKET).createSignedUrl(cleanPath, expiresIn);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function removeTestimonialVideo(path: string) {
+  const cleanPath = path.replace(/^\/+/, '');
+  if (!cleanPath || cleanPath.includes('..')) throw new Error('The video Storage path is invalid.');
+  const { error } = await requireClient().storage.from(TESTIMONIAL_VIDEO_BUCKET).remove([cleanPath]);
   if (error) throw error;
 }
