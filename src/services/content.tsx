@@ -15,7 +15,7 @@ export type PublicHeroSlide = {
 export type PublicService = { title: string; copy: string };
 export type PublicContentItem = { title: string; copy: string; slug?: string; image?: string };
 export type PublicTestimonial = { name: string; copy: string; location?: string; image?: string };
-export type PublicVideoTestimonial = { id: string; name?: string; destination?: string; feedback?: string; videoUrl: string; thumbnailUrl?: string };
+export type PublicVideoTestimonial = { id: string; name?: string; destination?: string; feedback?: string; videoUrl: string; thumbnailUrl?: string; storagePath?: string };
 export type PublicAward = { title: string; copy: string; issuer?: string; image?: string };
 
 const fallbackHeroSlides: PublicHeroSlide[] = [
@@ -196,12 +196,18 @@ export function PublicContentProvider({ children }: { children: ReactNode }) {
         const media = text(row.media_url);
         if (!media) return null;
         let videoUrl = media;
+        const storagePath = /^https:\/\//i.test(media) ? undefined : media.replace(/^\/+/, '');
         if (!/^https:\/\//i.test(media)) {
-          const signed = await api.storage.from('testimonial-videos').createSignedUrl(media.replace(/^\/+/,''), 3600);
+          const signed = await api.storage.from('testimonial-videos').createSignedUrl(storagePath!, 3600);
           if (signed.error || !signed.data?.signedUrl) return null;
           videoUrl = signed.data.signedUrl;
         }
-        return { id:text(row.id), name:text(row.name)||undefined, destination:text(row.location)||undefined, feedback:text(row.quote)||undefined, videoUrl, thumbnailUrl:text(row.poster_url)||undefined } satisfies PublicVideoTestimonial;
+        const poster=text(row.poster_url);let thumbnailUrl=poster||undefined;
+        if(poster&&!/^https:\/\//i.test(poster)){
+          const signedPoster=await api.storage.from('testimonial-thumbnails').createSignedUrl(poster.replace(/^\/+/,''),3600);
+          thumbnailUrl=signedPoster.data?.signedUrl||undefined;
+        }
+        return { id:text(row.id), name:text(row.name)||undefined, destination:text(row.location)||undefined, feedback:text(row.quote)||undefined, videoUrl, thumbnailUrl, storagePath } satisfies PublicVideoTestimonial;
       }))).filter((item):item is PublicVideoTestimonial=>Boolean(item?.id&&item.videoUrl));
 
       setContent({

@@ -3,6 +3,7 @@ import { ConfigurationError } from './platform';
 
 export const SITE_MEDIA_BUCKET = 'site-media';
 export const TESTIMONIAL_VIDEO_BUCKET = 'testimonial-videos';
+export const TESTIMONIAL_THUMBNAIL_BUCKET = 'testimonial-thumbnails';
 export const MAX_MEDIA_FILE_SIZE = 8 * 1024 * 1024;
 export const MAX_TESTIMONIAL_VIDEO_SIZE = 100 * 1024 * 1024;
 
@@ -12,8 +13,8 @@ const EXTENSIONS: Record<string, string> = {
   'image/png': 'png',
   'image/webp': 'webp',
 };
-const ALLOWED_VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
-const VIDEO_EXTENSIONS: Record<string, string> = { 'video/mp4':'mp4', 'video/webm':'webm', 'video/quicktime':'mov' };
+const ALLOWED_VIDEO_TYPES = new Set(['video/mp4', 'video/webm']);
+const VIDEO_EXTENSIONS: Record<string, string> = { 'video/mp4':'mp4', 'video/webm':'webm' };
 
 export type SiteMediaUpload = {
   path: string;
@@ -54,7 +55,8 @@ export function validateMediaFile(file: File) {
 }
 
 export function validateTestimonialVideo(file: File) {
-  if (!ALLOWED_VIDEO_TYPES.has(file.type)) throw new Error('Choose an MP4, WebM or MOV video.');
+  if (file.type === 'video/quicktime' || /\.mov$/i.test(file.name)) throw new Error('MOV is not accepted because its codec may not play in browsers. Export an MP4 (H.264/AAC) or WebM file.');
+  if (!ALLOWED_VIDEO_TYPES.has(file.type)) throw new Error('Choose a browser-compatible MP4 (H.264/AAC) or WebM video.');
   if (file.size <= 0) throw new Error('The selected video is empty.');
   if (file.size > MAX_TESTIMONIAL_VIDEO_SIZE) throw new Error('Testimonial videos must be 100 MB or smaller.');
 }
@@ -85,6 +87,11 @@ export async function uploadSiteMedia(file: File, options: SiteMediaUploadOption
 export async function uploadTestimonialVideo(file: File, options: SiteMediaUploadOptions): Promise<SiteMediaUpload> {
   validateTestimonialVideo(file);
   return uploadMedia(file, options, TESTIMONIAL_VIDEO_BUCKET, VIDEO_EXTENSIONS[file.type]);
+}
+
+export async function uploadTestimonialThumbnail(file: File, options: SiteMediaUploadOptions): Promise<SiteMediaUpload> {
+  validateMediaFile(file);
+  return uploadMedia(file, options, TESTIMONIAL_THUMBNAIL_BUCKET, EXTENSIONS[file.type]);
 }
 
 async function uploadMedia(file: File, options: SiteMediaUploadOptions, bucket: string, extension: string): Promise<SiteMediaUpload> {
@@ -157,5 +164,20 @@ export async function removeTestimonialVideo(path: string) {
   const cleanPath = path.replace(/^\/+/, '');
   if (!cleanPath || cleanPath.includes('..')) throw new Error('The video Storage path is invalid.');
   const { error } = await requireClient().storage.from(TESTIMONIAL_VIDEO_BUCKET).remove([cleanPath]);
+  if (error) throw error;
+}
+
+export async function getTestimonialThumbnailSignedUrl(path: string, expiresIn = 3600) {
+  const cleanPath = path.replace(/^\/+/, '');
+  if (!cleanPath || cleanPath.includes('..')) throw new Error('The thumbnail Storage path is invalid.');
+  const { data, error } = await requireClient().storage.from(TESTIMONIAL_THUMBNAIL_BUCKET).createSignedUrl(cleanPath, expiresIn);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function removeTestimonialThumbnail(path: string) {
+  const cleanPath = path.replace(/^\/+/, '');
+  if (!cleanPath || cleanPath.includes('..')) throw new Error('The thumbnail Storage path is invalid.');
+  const { error } = await requireClient().storage.from(TESTIMONIAL_THUMBNAIL_BUCKET).remove([cleanPath]);
   if (error) throw error;
 }
