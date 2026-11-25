@@ -6,6 +6,7 @@ import { usePublicContent } from './services/content';
 import BrandLogo from './components/BrandLogo';
 import VideoTestimonials from './components/VideoTestimonials';
 import { company } from './company';
+import TextReviews from './components/TextReviews';
 
 type FormProps = { compact?: boolean };
 const travelStyles = [
@@ -116,6 +117,8 @@ export default function HomeExperience({ EnquiryForm }: { EnquiryForm: Component
     </form>
 
     <VideoTestimonials testimonials={videoTestimonials}/>
+
+<TextReviews/>
 
     <section className="welcome-editorial" id="welcome">
       <div className="welcome-copy"><span className="section-overline">EXPLORE <i>•</i> EXPERIENCE <i>•</i> ENJOY</span><h2>We don’t just plan trips.<br/><em>We help shape the stories<br/>you’ll bring home.</em></h2><p>Somewhere new has a way of staying with you. We bring the route, the details and the breathing room together around the holiday you want to have.</p><Link to="/about" className="line-link">Meet My Tripon Travel <ArrowRight size={15}/></Link><span className="welcome-signature">My Tripon Travel <i>·</i> Delhi, India</span></div>

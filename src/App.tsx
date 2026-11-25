@@ -8,6 +8,7 @@ import { usePublicContent } from './services/content';
 import BrandLogo from './components/BrandLogo';
 import { company } from './company';
 import { destinationImageCreditForUrl } from './destinationImages';
+import Review from './pages/Review';
 
 const AdminPage=lazy(()=>import('./pages/ProductionPages').then(module=>({default:module.AdminPage})));
 const AuthPage=lazy(()=>import('./pages/ProductionPages').then(module=>({default:module.AuthPage})));
@@ -99,7 +100,7 @@ export default function App(){
   let canonical=document.querySelector<HTMLLinkElement>('link[rel="canonical"]');if(!canonical){canonical=document.createElement('link');canonical.rel='canonical';document.head.append(canonical)}canonical.href=`https://mytripontravel.com${loc.pathname}`;
   window.scrollTo({top:0,behavior:'auto'});
  },[loc.pathname]);
- return <>{!adminRoute&&<Header/>}<main id="main-content"><Suspense fallback={<div className="route-loading">Loading…</div>}><Routes>
+ return <>{!adminRoute&&<Header/>}<main id="main-content"><Suspense fallback={<div className="route-loading">Loading…</div>}><Routes><Route path="/review" element={<Review />} />
   <Route path="/" element={<Home/>}/><Route path="/about" element={<About/>}/><Route path="/packages" element={<Packages/>}/><Route path="/packages/:slug" element={<PackageDetail/>}/><Route path="/book/:slug" element={<BookingPage/>}/>
   <Route path="/destinations" element={<Destinations/>}/><Route path="/destinations/:slug" element={<DestinationDetail/>}/><Route path="/services" element={<ServicesPage/>}/><Route path="/gallery" element={<Gallery/>}/><Route path="/testimonials" element={<Testimonials/>}/><Route path="/awards" element={<Awards/>}/><Route path="/journal" element={<ContentIndex kind="journal"/>}/><Route path="/events" element={<ContentIndex kind="events"/>}/><Route path="/faqs" element={<ContentIndex kind="faqs"/>}/><Route path="/contact" element={<Contact/>}/>
   <Route path="/login" element={<AuthPage mode="login"/>}/><Route path="/register" element={<AuthPage mode="register"/>}/><Route path="/forgot-password" element={<AuthPage mode="forgot"/>}/><Route path="/reset-password" element={<AuthPage mode="reset"/>}/><Route path="/auth/callback" element={<AuthCallback/>}/><Route path="/auth/callback/reset-password" element={<AuthCallback resetPassword/>}/><Route path="/account" element={<CustomerPortal/>}/><Route path="/admin" element={<AdminPage/>}/>
